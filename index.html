@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>مسألة السطرين — كيمياء الصف التاسع</title>
+  <meta name="description" content="درس تفاعلي لمسألة السطرين في الكيمياء للصف التاسع: مختبر حل المسائل، مكعبات لتركيب المعادلة، ألعاب، ورسوم توضيحية." />
+  <meta name="theme-color" content="#0B4F43" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@500;600;700;800&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+  <!-- ===== أيقونات SVG ===== -->
+  <svg class="sprite" aria-hidden="true" focusable="false">
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z"/></symbol>
+    <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v17H6.5A2.5 2.5 0 0 0 4 21.5Z"/><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M8 7h8M8 11h5"/></symbol>
+    <symbol id="i-flask" viewBox="0 0 24 24"><path d="M9 2h6M10 2v6L5.2 19.2A2 2 0 0 0 7 22h10a2 2 0 0 0 1.8-2.8L14 8V2"/><path d="M7.5 14h9"/></symbol>
+    <symbol id="i-blocks" viewBox="0 0 24 24"><path d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z"/></symbol>
+    <symbol id="i-game" viewBox="0 0 24 24"><path d="M7 8h10a5 5 0 0 1 5 5v2a4 4 0 0 1-4 4c-1.6 0-2.7-1-3.7-2H9.7C8.7 18 7.6 19 6 19a4 4 0 0 1-4-4v-2a5 5 0 0 1 5-5Z"/><path d="M7 11v4M5 13h4M16 12h.01M18.5 14h.01"/></symbol>
+    <symbol id="i-palette" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20c1.7 0 2.4-1 2.4-2.1 0-2 1.5-2.9 3-2.9H19a3 3 0 0 0 3-3A10 10 0 0 0 12 2Z"/><circle cx="7.5" cy="10" r="1"/><circle cx="12" cy="7" r="1"/><circle cx="16.5" cy="10" r="1"/><circle cx="8" cy="15" r="1"/></symbol>
+    <symbol id="i-medal" viewBox="0 0 24 24"><circle cx="12" cy="15" r="6"/><path d="m12 12 .9 1.9 2 .3-1.5 1.4.4 2-1.8-1-1.8 1 .4-2-1.5-1.4 2-.3Z"/><path d="M8 2h8l-2 5H10Z"/></symbol>
+    <symbol id="i-sound" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4Z"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/></symbol>
+    <symbol id="i-mute" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4Z"/><path d="m16 9 5 6M21 9l-5 6"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4 8.5 8.5 0 1 0 20 14.5Z"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m4 12.5 5 5L20 6.5"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="m5 5 14 14M19 5 5 19"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4.5v15l13-7.5Z" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M3 11a9 9 0 0 1 15-6.7L21 7"/><path d="M21 3v4h-4"/><path d="M21 13a9 9 0 0 1-15 6.7L3 17"/><path d="M3 21v-4h4"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 20h16"/></symbol>
+    <symbol id="i-print" viewBox="0 0 24 24"><path d="M7 8V3h10v5M7 17H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/><path d="M7 14h10v7H7z"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 14h10l1-14"/><path d="M10 11v6M14 11v6"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></symbol>
+    <symbol id="i-star" viewBox="0 0 24 24"><path d="m12 2 3 6.5 7 .9-5 4.8 1.3 6.8L12 17.7 5.7 21l1.3-6.8-5-4.8 7-.9Z"/></symbol>
+    <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 10-13h-7Z"/></symbol>
+    <symbol id="i-scale" viewBox="0 0 24 24"><path d="M12 3v18M5 21h14M4 7h16"/><path d="M4 7 1.5 14a3 3 0 0 0 5 0Z"/><path d="M20 7l-2.5 7a3 3 0 0 0 5 0Z"/></symbol>
+    <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/></symbol>
+    <symbol id="i-brain" viewBox="0 0 24 24"><path d="M9.5 4A3 3 0 0 0 6 7a3 3 0 0 0-2 5.2A3.5 3.5 0 0 0 7 18a3 3 0 0 0 5 1V4.8A2.8 2.8 0 0 0 9.5 4Z"/><path d="M14.5 4A3 3 0 0 1 18 7a3 3 0 0 1 2 5.2 3.5 3.5 0 0 1-3 5.8 3 3 0 0 1-5 1V4.8A2.8 2.8 0 0 1 14.5 4Z"/></symbol>
+    <symbol id="i-list" viewBox="0 0 24 24"><path d="M9 6h12M9 12h12M9 18h12M3 6h.01M3 12h.01M3 18h.01"/></symbol>
+    <symbol id="i-trophy" viewBox="0 0 24 24"><path d="M7 3h10v5a5 5 0 0 1-10 0Z"/><path d="M7 5H3v2a4 4 0 0 0 4 4M17 5h4v2a4 4 0 0 1-4 4"/><path d="M12 13v5M8 21h8M9 18h6"/></symbol>
+    <symbol id="i-atom" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2"/><ellipse cx="12" cy="12" rx="10" ry="4.5"/><ellipse cx="12" cy="12" rx="10" ry="4.5" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4.5" transform="rotate(120 12 12)"/></symbol>
+    <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 2v5M12 17v5M2 12h5M17 12h5M5 5l3 3M16 16l3 3M19 5l-3 3M8 16l-3 3"/></symbol>
+    <symbol id="i-flame" viewBox="0 0 24 24"><path d="M12 2c1 4-2 5-2 8a3 3 0 0 0 6 0c0-1 0-2-1-3 4 3 6 6 6 9a7 7 0 0 1-14 0c0-4 3-6 5-9 0 2 1 3 2 3 0-3-2-5-2-8Z"/></symbol>
+    <symbol id="i-drop" viewBox="0 0 24 24"><path d="M12 2s7 7.6 7 12a7 7 0 0 1-14 0c0-4.4 7-12 7-12Z"/></symbol>
+    <symbol id="i-leaf" viewBox="0 0 24 24"><path d="M4 20c0-9 6-15 16-16 0 10-5 16-13 16Z"/><path d="M4 20 16 8"/></symbol>
+    <symbol id="i-mountain" viewBox="0 0 24 24"><path d="m2 20 7-13 5 8 3-4 5 9Z"/></symbol>
+    <symbol id="i-salt" viewBox="0 0 24 24"><path d="m12 2 8 4.5v11L12 22l-8-4.5v-11Z"/><path d="m4 6.5 8 4.5 8-4.5M12 11v11"/></symbol>
+    <symbol id="i-bubble" viewBox="0 0 24 24"><circle cx="8" cy="16" r="4"/><circle cx="16" cy="12" r="3"/><circle cx="11" cy="7" r="2.5"/><circle cx="18" cy="19" r="2"/></symbol>
+    <symbol id="i-cylinder" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="7" ry="3"/><path d="M5 5v14c0 1.7 3.1 3 7 3s7-1.3 7-3V5"/><path d="M5 11c0 1.7 3.1 3 7 3s7-1.3 7-3"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 2 4 5v7c0 5 3.4 8.3 8 10 4.6-1.7 8-5 8-10V5Z"/><path d="m8.5 12 2.5 2.5 4.5-5"/></symbol>
+    <symbol id="i-calculator" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M7 6h10v4H7zM8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"/></symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 9h18"/><path d="M8 13h2M14 13h2M8 17h2M14 17h2"/></symbol>
+    <symbol id="i-seed" viewBox="0 0 24 24"><path d="M12 22V10"/><path d="M12 12C8 12 5 9 5 5c5 0 7 3 7 7ZM12 16c4 0 7-3 7-7-5 0-7 3-7 7Z"/></symbol>
+    <symbol id="i-crown" viewBox="0 0 24 24"><path d="m3 6 4 4 5-6 5 6 4-4-2 12H5Z"/><path d="M5 21h14"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="m5 5 14 14M19 5 5 19"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7h.01"/></symbol>
+    <symbol id="i-bulb" viewBox="0 0 24 24"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2Z"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="13" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+  </svg>
+
+  <canvas id="confetti" aria-hidden="true"></canvas>
+  <div id="toastStack" class="toast-stack" aria-live="polite"></div>
+  <div id="liveRegion" class="sr-only" aria-live="polite"></div>
+
+  <!-- ===== الشريط العلوي ===== -->
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="#home" data-nav="home" aria-label="مسألة السطرين — الصفحة الرئيسية">
+        <span class="brand-mark" aria-hidden="true">
+          <span class="brand-atom"></span>
+          <span class="brand-formula">2H<sub>2</sub>O</span>
+        </span>
+        <span class="brand-text">
+          <strong>مسألة السطرين</strong>
+          <small>كيمياء · الصف التاسع</small>
+        </span>
+      </a>
+
+      <nav class="mainnav" id="mainNav" aria-label="أقسام التطبيق">
+        <button class="navbtn is-active" data-view="home" aria-current="page"><svg class="ic"><use href="#i-home"/></svg><span>الرئيسية</span></button>
+        <button class="navbtn" data-view="learn"><svg class="ic"><use href="#i-book"/></svg><span>الدرس</span></button>
+        <button class="navbtn" data-view="lab"><svg class="ic"><use href="#i-flask"/></svg><span>المختبر</span></button>
+        <button class="navbtn" data-view="blocks"><svg class="ic"><use href="#i-blocks"/></svg><span>المكعبات</span></button>
+        <button class="navbtn" data-view="games"><svg class="ic"><use href="#i-game"/></svg><span>الألعاب</span></button>
+        <button class="navbtn" data-view="art"><svg class="ic"><use href="#i-palette"/></svg><span>المرسم</span></button>
+        <button class="navbtn" data-view="me"><svg class="ic"><use href="#i-medal"/></svg><span>جوائزي</span></button>
+      </nav>
+
+      <div class="topbar-actions">
+        <button class="iconbtn" id="soundBtn" type="button" aria-label="إيقاف الأصوات" aria-pressed="true">
+          <svg class="ic"><use href="#i-sound"/></svg>
+        </button>
+        <button class="iconbtn" id="themeBtn" type="button" aria-label="تبديل الوضع الليلي">
+          <svg class="ic"><use href="#i-moon"/></svg>
+        </button>
+        <button class="xpchip" id="xpChip" type="button" data-view="me" aria-label="مستواك ونقاطك">
+          <span class="xpchip-level" id="xpChipLevel">1</span>
+          <span class="xpchip-body">
+            <span class="xpchip-title" id="xpChipTitle">مبتدئ</span>
+            <span class="xpchip-bar"><i id="xpChipBar" style="width:0%"></i></span>
+          </span>
+          <span class="xpchip-xp" id="xpChipXp">0 XP</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="app">
+    <!-- ================= الرئيسية ================= -->
+    <section id="view-home" class="view is-active" aria-labelledby="homeTitle">
+      <div class="hero">
+        <div class="hero-copy">
+          <h1 id="homeTitle">مسألة السطرين<br><span>في الكيمياء</span></h1>
+          <p class="hero-sub">سطر المعادلة، وسطر الكميات… وبينهما تناسب واحد يفتح لك باب الحسابات الكيميائية. درس تفاعلي كامل للصف التاسع.</p>
+          <div class="hero-actions">
+            <button class="btn btn-primary btn-lg" data-view="learn" id="startLessonBtn">
+              <svg class="ic"><use href="#i-play"/></svg>
+              ابدأ الدرس
+            </button>
+            <button class="btn btn-ghost btn-lg" data-view="lab">
+              <svg class="ic"><use href="#i-flask"/></svg>
+              جرّب المختبر
+            </button>
+          </div>
+          <ul class="hero-points">
+            <li><svg class="ic"><use href="#i-check"/></svg> 10 تفاعلات جاهزة</li>
+            <li><svg class="ic"><use href="#i-check"/></svg> مكعبات لتركيب الحل</li>
+            <li><svg class="ic"><use href="#i-check"/></svg> 7 ألعاب تفاعلية</li>
+          </ul>
+        </div>
+
+        <div class="hero-stage" aria-label="معاينة مسألة السطرين">
+          <div class="hero-orbit hero-orbit-a" aria-hidden="true"><span class="atom-dot dot-o"></span><span class="atom-dot dot-h"></span></div>
+          <div class="hero-orbit hero-orbit-b" aria-hidden="true"><span class="atom-dot dot-h"></span><span class="atom-dot dot-n"></span></div>
+
+          <div class="board-card">
+            <div class="board-tape" aria-hidden="true"></div>
+            <div class="board-head">
+              <span class="board-label">دفتر المختبر</span>
+              <span class="board-stamp">موزونة ✓</span>
+            </div>
+            <div id="heroBoard" class="board-eq"></div>
+            <div class="board-note">
+              <svg class="ic"><use href="#i-bulb"/></svg>
+              <p>كل مادة في السطر الثاني = معاملها × كتلتها المولية.</p>
+            </div>
+            <div class="board-answer">
+              <span>الجواب</span>
+              <strong>72 غ</strong>
+              <small>من الماء</small>
+            </div>
+          </div>
+
+          <div class="hero-sticker sticker-a">الصف التاسع</div>
+          <div class="hero-sticker sticker-b">خطوة بخطوة</div>
+        </div>
+      </div>
+
+      <div class="stat-strip" id="homeStats"></div>
+
+      <section class="home-why" aria-labelledby="whyTitle">
+        <div class="section-head">
+          <h2 id="whyTitle">لماذا نكتب سطرين؟</h2>
+          <p>لأن المعادلة الموزونة تحكي بعدد المولات، والمختبر يزن بالغرام. السطر الثاني يترجم المولات إلى كتل.</p>
+        </div>
+        <div class="why-grid">
+          <article class="why-line why-line-1">
+            <span class="why-tag">السطر الأول</span>
+            <div class="why-eq" id="whyEq"></div>
+            <p>المعادلة الموزونة: تخبرنا بالنِّسَب التي تتفاعل بها المواد.</p>
+          </article>
+          <article class="why-line why-line-2">
+            <span class="why-tag">السطر الثاني</span>
+            <div class="why-mass" id="whyMass"></div>
+            <p>سطر الكميات: الكتلة المولية × المعامل، تحت كل مادة.</p>
+          </article>
+          <article class="why-result">
+            <div class="why-arrow" aria-hidden="true"><svg class="ic"><use href="#i-arrow"/></svg></div>
+            <h3>تناسب واحد</h3>
+            <p>المعطى فوق مادته، والمجهول فوق مادته… ثم اضرب بالتقاطع.</p>
+            <button class="textlink" data-view="learn">شاهد الطريقة كاملة <svg class="ic"><use href="#i-chevron"/></svg></button>
+          </article>
+        </div>
+      </section>
+
+      <section class="home-paths" aria-labelledby="pathsTitle">
+        <div class="section-head">
+          <h2 id="pathsTitle">اختر طريقك</h2>
+          <p>خمس طرق للوصول إلى الإتقان. ابدأ بالدرس، ثم جرّب بنفسك.</p>
+        </div>
+        <div class="paths-grid">
+          <button class="path-card path-main" data-view="learn">
+            <span class="path-badge">ابدأ هنا</span>
+            <span class="path-icon"><svg class="ic"><use href="#i-book"/></svg></span>
+            <span class="path-title">درس تفاعلي<br>من الصفر</span>
+            <span class="path-desc">ست خطوات قصيرة، مع أسئلة سريعة بعد كل فكرة.</span>
+            <span class="path-cta">افتح الدرس <svg class="ic"><use href="#i-chevron"/></svg></span>
+            <span class="path-art" id="pathArt" aria-hidden="true"></span>
+          </button>
+          <button class="path-card path-lab" data-view="lab">
+            <span class="path-icon"><svg class="ic"><use href="#i-flask"/></svg></span>
+            <span class="path-title">المختبر</span>
+            <span class="path-desc">أدخل كتلة معطاة وشاهد الحل كاملاً.</span>
+            <span class="path-cta">حلّ مسألة <svg class="ic"><use href="#i-chevron"/></svg></span>
+          </button>
+          <button class="path-card path-blocks" data-view="blocks">
+            <span class="path-icon"><svg class="ic"><use href="#i-blocks"/></svg></span>
+            <span class="path-title">المكعبات</span>
+            <span class="path-desc">ركّب المعادلة والسطر الثاني والتناسب بيدك.</span>
+            <span class="path-cta">ابنِ الحل <svg class="ic"><use href="#i-chevron"/></svg></span>
+          </button>
+          <button class="path-card path-games" data-view="games">
+            <span class="path-icon"><svg class="ic"><use href="#i-game"/></svg></span>
+            <span class="path-title">الألعاب</span>
+            <span class="path-desc">سبع ألعاب سريعة تكافئك بنقاط وشارات.</span>
+            <span class="path-cta">العب الآن <svg class="ic"><use href="#i-chevron"/></svg></span>
+          </button>
+          <button class="path-card path-me" data-view="me">
+            <span class="path-icon"><svg class="ic"><use href="#i-medal"/></svg></span>
+            <span class="path-title">جوائزي</span>
+            <span class="path-desc">تابع مستواك، وشاراتك، ومسائلك المحفوظة.</span>
+            <span class="path-cta">افتح اللوحة <svg class="ic"><use href="#i-chevron"/></svg></span>
+          </button>
+        </div>
+      </section>
+
+      <section class="home-daily" aria-labelledby="dailyTitle">
+        <div class="daily-intro">
+          <h2 id="dailyTitle">مسألة اليوم</h2>
+          <p>مسألة جديدة كل يوم. حلّها لتحصل على نقاط مضاعفة وشارة المثابر.</p>
+          <div class="daily-streak" id="dailyStreak"></div>
+        </div>
+        <div class="daily-card" id="dailyCard">
+          <div class="loading-line"></div>
+        </div>
+      </section>
+
+      <section class="home-tip" aria-labelledby="tipTitle">
+        <div class="tip-art" aria-hidden="true">
+          <svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="46" fill="var(--mint-2)"/><circle cx="60" cy="60" r="30" fill="var(--surface)"/><path d="M60 34v52M34 60h52" stroke="var(--ink)" stroke-width="3" stroke-linecap="round"/><circle cx="60" cy="60" r="7" fill="var(--coral)"/></svg>
+        </div>
+        <div class="tip-copy">
+          <h2 id="tipTitle">نصيحة من المرشد</h2>
+          <p id="tipText">ابدأ دائماً بموازنة المعادلة.</p>
+          <button class="btn btn-ghost btn-sm" id="nextTipBtn"><svg class="ic"><use href="#i-refresh"/></svg> نصيحة أخرى</button>
+        </div>
+        <button class="btn btn-soft btn-sm" id="elementsBtn"><svg class="ic"><use href="#i-atom"/></svg> جدول العناصر المصغّر</button>
+      </section>
+    </section>
+
+    <!-- ================= الدرس ================= -->
+    <section id="view-learn" class="view" aria-labelledby="learnTitle">
+      <div class="page-head">
+        <div>
+          <h2 id="learnTitle">الدرس التفاعلي</h2>
+          <p>ست خطوات قصيرة… وفي نهاية كل خطوة سؤال صغير يثبّت الفكرة.</p>
+        </div>
+        <div class="page-head-badge" id="lessonBadge"><svg class="ic"><use href="#i-book"/></svg> الخطوة <span id="lessonStepNum">1</span> من 6</div>
+      </div>
+
+      <div class="lesson-progress" aria-hidden="true"><span id="lessonProgressBar" style="width:0%"></span></div>
+
+      <div class="lesson-layout">
+        <aside class="lesson-side">
+          <ol class="lesson-steps" id="lessonStepList"></ol>
+          <div class="lesson-side-note">
+            <svg class="ic"><use href="#i-info"/></svg>
+            <p>يمكنك التنقل بين الخطوات في أي وقت. تقدّمك محفوظ تلقائياً.</p>
+          </div>
+        </aside>
+
+        <div class="lesson-main">
+          <div id="lessonStage" class="lesson-stage"></div>
+          <div class="lesson-nav">
+            <button class="btn btn-ghost" id="lessonPrev" type="button"><svg class="ic flip"><use href="#i-chevron"/></svg> السابق</button>
+            <button class="btn btn-primary" id="lessonNext" type="button">التالي <svg class="ic"><use href="#i-chevron"/></svg></button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= المختبر ================= -->
+    <section id="view-lab" class="view" aria-labelledby="labTitle">
+      <div class="page-head">
+        <div>
+          <h2 id="labTitle">مختبر الحل</h2>
+          <p>اختر تفاعلاً، ضع الكتلة المعطاة، واختر المادة المطلوبة. الحل يُبنى أمامك سطراً بسطر.</p>
+        </div>
+        <button class="btn btn-soft" id="labRandomBtn" type="button"><svg class="ic"><use href="#i-refresh"/></svg> مسألة عشوائية</button>
+      </div>
+
+      <div class="reaction-strip" id="labReactionStrip" role="tablist" aria-label="اختر التفاعل"></div>
+
+      <div class="lab-layout">
+        <aside class="lab-panel">
+          <h3 class="panel-title">معطيات المسألة</h3>
+
+          <label class="field">
+            <span class="field-label">المادة المعطاة</span>
+            <select id="givenSelect" class="select"></select>
+          </label>
+
+          <div class="field">
+            <span class="field-label">كتلتها المعطاة</span>
+            <div class="mass-input">
+              <input id="massInput" type="number" inputmode="decimal" min="0.1" max="2000" step="0.5" value="8" aria-label="الكتلة المعطاة بالغرام" />
+              <span class="unit">غ</span>
+            </div>
+            <input id="massRange" class="range" type="range" min="1" max="40" step="0.5" value="8" aria-label="شريط تغيير الكتلة" />
+            <div class="range-scale"><span>1 غ</span><span id="rangeMax">40 غ</span></div>
+          </div>
+
+          <label class="field">
+            <span class="field-label">المادة المطلوبة</span>
+            <select id="targetSelect" class="select"></select>
+          </label>
+
+          <div class="lab-actions">
+            <button class="btn btn-primary btn-block" id="labSolveBtn" type="button"><svg class="ic"><use href="#i-spark"/></svg> شاهد الحل</button>
+            <div class="lab-two">
+              <button class="btn btn-ghost btn-sm" id="labSaveBtn" type="button"><svg class="ic"><use href="#i-star"/></svg> احفظ المسألة</button>
+              <button class="btn btn-ghost btn-sm" id="labMolesBtn" type="button" aria-pressed="false">بالمولات</button>
+            </div>
+          </div>
+
+          <div class="panel-tip">
+            <strong>تذكير</strong>
+            <p>الكتلة المولية للمادة = مجموع كتل ذراتها. المعامل يضرب الكتلة المولية كلها.</p>
+          </div>
+        </aside>
+
+        <div class="lab-main">
+          <div class="lab-board-wrap">
+            <div class="lab-board-head">
+              <span class="tag" id="labTag">تكوين</span>
+              <h3 id="labReactionTitle">تشكّل الماء</h3>
+              <span class="lab-eq-label">المعادلة الموزونة</span>
+            </div>
+            <div id="labBoard" class="eq-board"></div>
+            <div class="board-key">
+              <span><i class="key-dot key-given"></i> المعطى</span>
+              <span><i class="key-dot key-target"></i> المطلوب</span>
+              <span><i class="key-dot key-line"></i> السطر الثاني</span>
+            </div>
+          </div>
+
+          <div id="labViz" class="lab-viz" aria-hidden="true"></div>
+
+          <div class="lab-answer" id="labAnswer"></div>
+
+          <div class="steps-card">
+            <div class="steps-card-head">
+              <h3>خطوات الحل</h3>
+              <span class="steps-hint">اضغط على أي خطوة لتكبيرها</span>
+            </div>
+            <ol class="solution-steps" id="labSteps"></ol>
+          </div>
+
+          <div class="lab-meta" id="labMeta"></div>
+        </div>
+      </div>
+
+      <div class="lab-extra">
+        <div class="extra-card">
+          <h3>لماذا هذا الجواب؟</h3>
+          <p id="labWhy">نستخدم التناسب لأن نسبة الكتل في المعادلة ثابتة. إذا تضاعفت كمية المادة المعطاة، تضاعفت كمية الناتج بالنسبة نفسها.</p>
+        </div>
+        <div class="extra-card extra-card-fact">
+          <h3>هل تعلم؟</h3>
+          <p id="labFact">قطرة ماء واحدة تحتوي على أكثر من 10²¹ جزيء ماء!</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= المكعبات ================= -->
+    <section id="view-blocks" class="view" aria-labelledby="blocksTitle">
+      <div class="page-head">
+        <div>
+          <h2 id="blocksTitle">ورشة المكعبات</h2>
+          <p>ثلاث مراحل: وازن المعادلة، اكتب السطر الثاني، ثم ركّب التناسب. اسحب المكعب أو اضغط عليه ثم اضغط الفراغ.</p>
+        </div>
+        <div class="page-head-badge" id="blocksXp"><svg class="ic"><use href="#i-blocks"/></svg> <span>0/3 مراحل</span></div>
+      </div>
+
+      <div class="block-reactions" id="blockReactions" role="tablist" aria-label="اختر تفاعلاً للورشة"></div>
+
+      <div class="workshop">
+        <div class="workshop-top">
+          <div class="stage-track" id="stageTrack">
+            <div class="stage-pill is-active" data-stage="1"><span>1</span><div><strong>وازن المعادلة</strong><small>ضع المعاملات</small></div></div>
+            <div class="stage-pill" data-stage="2"><span>2</span><div><strong>السطر الثاني</strong><small>ضع الكتل</small></div></div>
+            <div class="stage-pill" data-stage="3"><span>3</span><div><strong>ركّب التناسب</strong><small>واحسب س</small></div></div>
+          </div>
+          <div class="workshop-tools">
+            <button class="btn btn-ghost btn-sm" id="blocksHintBtn" type="button"><svg class="ic"><use href="#i-bulb"/></svg> تلميح</button>
+            <button class="btn btn-ghost btn-sm" id="blocksResetBtn" type="button"><svg class="ic"><use href="#i-refresh"/></svg> إعادة</button>
+          </div>
+        </div>
+
+        <div id="blocksStage" class="blocks-stage"></div>
+        <div class="blocks-feedback" id="blocksFeedback" aria-live="polite"></div>
+      </div>
+
+      <div class="workshop-foot">
+        <div class="mini-legend">
+          <span><b class="legend-chip legend-coef">2</b> معامل</span>
+          <span><b class="legend-chip legend-mass">36 غ</b> كتلة</span>
+          <span><b class="legend-chip legend-slot">؟</b> فراغ</span>
+        </div>
+        <p>المكعب الذي تختاره يُضاء. اضغط الفراغ لوضعه، واضغط المكعب الموضوع لإزالته.</p>
+      </div>
+    </section>
+
+    <!-- ================= الألعاب ================= -->
+    <section id="view-games" class="view" aria-labelledby="gamesTitle">
+      <div class="page-head">
+        <div>
+          <h2 id="gamesTitle">ملعب الكيمياء</h2>
+          <p>تعلّم باللعب. كل لعبة تمنحك نقاط خبرة، وأفضل نتيجة تُحفظ في جوائزك.</p>
+        </div>
+        <div class="page-head-badge" id="gamesXp"><svg class="ic"><use href="#i-trophy"/></svg> <span>0 نقطة</span></div>
+      </div>
+
+      <div class="games-grid" id="gamesGrid"></div>
+
+      <div class="games-banner">
+        <div>
+          <h3>تحدي الأسبوع</h3>
+          <p>اجمع 300 نقطة في الألعاب وافتح شارة «قنّاص النقاط».</p>
+        </div>
+        <div class="games-banner-bar"><span id="gamesGoalBar" style="width:0%"></span></div>
+        <span class="games-banner-value" id="gamesGoalValue">0 / 300</span>
+      </div>
+    </section>
+
+    <!-- ================= المرسم ================= -->
+    <section id="view-art" class="view" aria-labelledby="artTitle">
+      <div class="page-head">
+        <div>
+          <h2 id="artTitle">مرسم التفاعلات</h2>
+          <p>شاهد المواد تتحول إلى نواتج، وتأكد أن عدد الذرات لم يتغير. ثم حوّل التفاعل إلى بطاقة فنية.</p>
+        </div>
+        <button class="btn btn-soft" id="artPlayBtn" type="button"><svg class="ic"><use href="#i-play"/></svg> شغّل التفاعل</button>
+      </div>
+
+      <div class="art-reactions" id="artReactions" role="tablist" aria-label="اختر تفاعلاً للمرسم"></div>
+
+      <div class="art-layout">
+        <div class="art-stage-card">
+          <div class="art-stage-head">
+            <h3 id="artReactionTitle">تشكّل الماء</h3>
+            <div class="art-stage-tools">
+              <button class="btn btn-ghost btn-sm" id="artReplayBtn" type="button"><svg class="ic"><use href="#i-refresh"/></svg> أعد</button>
+              <button class="btn btn-ghost btn-sm" id="artPosterBtn" type="button"><svg class="ic"><use href="#i-download"/></svg> بطاقة التفاعل</button>
+            </div>
+          </div>
+          <div id="artStage" class="art-stage"></div>
+          <div class="art-legend" id="artLegend"></div>
+        </div>
+
+        <div class="art-side">
+          <div class="art-tally-card">
+            <h3>حفظ الذرات</h3>
+            <p class="art-tally-sub">عدد الذرات قبل التفاعل = عددها بعده.</p>
+            <div id="artTally" class="art-tally"></div>
+          </div>
+          <div class="art-chart-card">
+            <h3>كتل السطر الثاني</h3>
+            <div id="artChart" class="art-chart"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="art-story" id="artStory"></div>
+    </section>
+
+    <!-- ================= جوائزي ================= -->
+    <section id="view-me" class="view" aria-labelledby="meTitle">
+      <div class="page-head">
+        <div>
+          <h2 id="meTitle">لوحة الإنجازات</h2>
+          <p>كل مسألة تحلّها وكل معادلة توازنها تقرّبك من المستوى التالي.</p>
+        </div>
+        <button class="btn btn-soft" id="certBtn" type="button"><svg class="ic"><use href="#i-download"/></svg> شهادة إنجاز</button>
+      </div>
+
+      <div class="profile-grid">
+        <div class="profile-card">
+          <div class="profile-top">
+            <div class="avatar" id="profileAvatar"><svg class="ic"><use href="#i-atom"/></svg></div>
+            <div class="profile-id">
+              <label class="name-field">
+                <span>اسمك في الشهادة</span>
+                <input id="studentName" type="text" maxlength="40" placeholder="اكتب اسمك هنا" />
+              </label>
+              <div class="profile-level" id="profileLevel">المستوى 1 · مبتدئ</div>
+            </div>
+          </div>
+          <div class="xp-block">
+            <div class="xp-block-head"><span>نقاط الخبرة</span><strong id="profileXpText">0 XP</strong></div>
+            <div class="xp-bar"><span id="profileXpBar" style="width:0%"></span></div>
+            <div class="xp-block-foot"><span id="profileNextText">120 XP للمستوى التالي</span><span id="profileLevelPct">0%</span></div>
+          </div>
+          <div class="profile-stats" id="profileStats"></div>
+        </div>
+
+        <div class="next-level-card" id="nextLevelCard"></div>
+      </div>
+
+      <section class="badges-section" aria-labelledby="badgesTitle">
+        <div class="section-head section-head-row">
+          <div>
+            <h2 id="badgesTitle">الشارات</h2>
+            <p id="badgesCount">0 من 12 شارة</p>
+          </div>
+          <div class="badge-filter" role="group" aria-label="تصفية الشارات">
+            <button class="filter-btn is-active" data-filter="all">الكل</button>
+            <button class="filter-btn" data-filter="unlocked">المفتوحة</button>
+            <button class="filter-btn" data-filter="locked">المقفلة</button>
+          </div>
+        </div>
+        <div class="badges-grid" id="badgesGrid"></div>
+      </section>
+
+      <section class="saved-section" aria-labelledby="savedTitle">
+        <div class="section-head section-head-row">
+          <div>
+            <h2 id="savedTitle">دفتر المسائل</h2>
+            <p>المسائل التي حفظتها من المختبر.</p>
+          </div>
+          <div class="saved-actions">
+            <button class="btn btn-ghost btn-sm" id="worksheetBtn" type="button"><svg class="ic"><use href="#i-print"/></svg> ورقة عمل</button>
+            <button class="btn btn-ghost btn-sm" id="clearSavedBtn" type="button"><svg class="ic"><use href="#i-trash"/></svg> مسح الدفتر</button>
+          </div>
+        </div>
+        <div id="savedList" class="saved-list"></div>
+      </section>
+
+      <section class="me-danger" aria-labelledby="settingsTitle">
+        <div>
+          <h2 id="settingsTitle">الإعدادات</h2>
+          <p>يمكنك تصفير التقدم والبدء من جديد. لا يمكن التراجع عن هذه الخطوة.</p>
+        </div>
+        <button class="btn btn-danger" id="resetBtn" type="button"><svg class="ic"><use href="#i-trash"/></svg> تصفير التقدم</button>
+      </section>
+    </section>
+  </main>
+
+  <footer class="site-foot">
+    <div class="foot-main">
+      <div class="foot-brand">
+        <span class="brand-mark brand-mark-sm" aria-hidden="true"><span class="brand-atom"></span><span class="brand-formula">2H<sub>2</sub>O</span></span>
+        <div>
+          <strong>مسألة السطرين</strong>
+          <p>درس كيمياء تفاعلي للصف التاسع — سوريا</p>
+        </div>
+      </div>
+      <p class="foot-note">كل الحسابات تعتمد على الكتل الذرية المدرسية المقرّبة. تعلّم، جرّب، وأعد المحاولة بلا خوف.</p>
+      <div class="foot-links">
+        <button class="textlink" data-view="learn">الدرس</button>
+        <button class="textlink" data-view="lab">المختبر</button>
+        <button class="textlink" data-view="games">الألعاب</button>
+        <button class="textlink" data-view="me">جوائزي</button>
+      </div>
+    </div>
+    <div class="foot-foot">
+      <span>صُنع لطلاب الصف التاسع</span>
+      <span>الكتل الذرية: H=1 · C=12 · N=14 · O=16 · Na=23 · Cl=35.5</span>
+    </div>
+  </footer>
+
+  <!-- ===== نافذة جدول العناصر ===== -->
+  <dialog id="elementsDialog" class="dialog dialog-wide" aria-labelledby="elementsTitle">
+    <div class="dialog-head">
+      <div>
+        <h2 id="elementsTitle">جدول العناصر المصغّر</h2>
+        <p>العناصر الأكثر استخداماً في مقرر الصف التاسع، مع كتلها الذرية.</p>
+      </div>
+      <button class="iconbtn dialog-close" type="button" data-close-dialog aria-label="إغلاق"><svg class="ic"><use href="#i-close"/></svg></button>
+    </div>
+    <div id="elementsGrid" class="elements-grid"></div>
+    <div class="elements-tip"><svg class="ic"><use href="#i-info"/></svg> اضغط على أي عنصر لرؤية اسمه وكتلته الذرية.</div>
+  </dialog>
+
+  <!-- ===== نافذة اللعبة ===== -->
+  <dialog id="gameDialog" class="dialog dialog-game" aria-labelledby="gameTitle">
+    <div class="game-shell">
+      <div class="game-head">
+        <div class="game-title-wrap">
+          <span class="game-icon" id="gameIcon"><svg class="ic"><use href="#i-bolt"/></svg></span>
+          <div>
+            <h2 id="gameTitle">لعبة</h2>
+            <p id="gameSub">استعد…</p>
+          </div>
+        </div>
+        <div class="game-hud">
+          <span class="hud-chip" id="gameScoreChip"><b>0</b> نقطة</span>
+          <span class="hud-chip hud-time" id="gameTimeChip"><b>60</b> ث</span>
+          <button class="iconbtn dialog-close" type="button" data-close-game aria-label="إغلاق اللعبة"><svg class="ic"><use href="#i-close"/></svg></button>
+        </div>
+      </div>
+      <div class="game-body" id="gameBody"></div>
+      <div class="game-foot" id="gameFoot"></div>
+    </div>
+  </dialog>
+
+  <!-- ===== نافذة تأكيد ===== -->
+  <dialog id="confirmDialog" class="dialog dialog-small" aria-labelledby="confirmTitle">
+    <div class="dialog-head">
+      <h2 id="confirmTitle">هل أنت متأكد؟</h2>
+      <button class="iconbtn dialog-close" type="button" data-close-confirm aria-label="إغلاق"><svg class="ic"><use href="#i-close"/></svg></button>
+    </div>
+    <p id="confirmText" class="confirm-text"></p>
+    <div class="dialog-actions">
+      <button class="btn btn-ghost" type="button" data-close-confirm>إلغاء</button>
+      <button class="btn btn-danger" id="confirmYes" type="button">تأكيد</button>
+    </div>
+  </dialog>
+
+  <!-- ===== ورقة العمل للطباعة ===== -->
+  <section id="worksheet" class="worksheet" aria-hidden="true"></section>
+
+  <script src="js/chemistry.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
