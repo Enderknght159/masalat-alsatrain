@@ -209,6 +209,8 @@ sub {
   align-items: center;
   gap: 18px;
   min-height: var(--topbar-h);
+  min-width: 0;
+  width: 100%;
 }
 
 .brand {
@@ -282,6 +284,7 @@ sub {
   margin-inline-start: auto;
   overflow-x: auto;
   scrollbar-width: none;
+  min-width: 0;
 }
 
 .mainnav::-webkit-scrollbar {
@@ -794,6 +797,70 @@ sub {
   padding: 14px 8px 12px;
   border-top: 1.5px dashed rgba(16, 36, 30, 0.22);
   border-bottom: 1.5px dashed rgba(16, 36, 30, 0.22);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.board-eq::-webkit-scrollbar {
+  display: none;
+}
+
+.board-eq .rxn-table {
+  border-spacing: 2px 2px;
+}
+
+.board-eq .rxn-row-label,
+.board-eq .atomic-note {
+  display: none;
+}
+
+.board-eq .rxn-eq .rxn-term {
+  font-size: 20px;
+}
+
+.board-eq .rxn-general-cell {
+  padding: 3px 5px !important;
+}
+
+.board-eq .rxn-mass {
+  font-size: 10px;
+}
+
+.board-eq .rxn-vol {
+  font-size: 8px;
+  padding-top: 1px;
+}
+
+.board-eq .rxn-problem-cell {
+  padding: 2px 5px !important;
+}
+
+.board-eq .rxn-given {
+  font-size: 11px;
+}
+
+.board-eq .rxn-x {
+  font-size: 17px;
+}
+
+.why-mass .rxn-table {
+  border-spacing: 2px 2px;
+}
+
+.why-mass .rxn-row-label {
+  display: none;
+}
+
+.why-mass .rxn-general-cell {
+  padding: 4px 5px !important;
+}
+
+.why-mass .rxn-mass {
+  font-size: 11px;
+}
+
+.why-mass .rxn-vol {
+  font-size: 8.5px;
 }
 
 .board-note {
@@ -1940,6 +2007,231 @@ sub {
   margin-top: 10px;
 }
 
+/* جدول التفاعل: المعادلة + السطر العام + سطر المسألة */
+
+.rxn-block {
+  width: 100%;
+}
+
+.rxn-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.rxn-table {
+  border-collapse: separate;
+  border-spacing: 3px 4px;
+  direction: ltr;
+  margin: 0 auto;
+}
+
+.rxn-table td,
+.rxn-table th {
+  padding: 4px 6px;
+  text-align: center;
+  vertical-align: middle;
+  border: 0;
+}
+
+.rxn-eq .rxn-term {
+  font-size: clamp(20px, 2.4vw, 28px);
+  font-weight: 600;
+  line-height: 1.15;
+  white-space: nowrap;
+  padding-bottom: 4px !important;
+}
+
+.rxn-eq .rxn-formula {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.08em;
+}
+
+.rxn-op {
+  color: var(--muted);
+  font-size: 19px;
+  min-width: 18px;
+  padding-inline: 1px !important;
+}
+
+.rxn-arrow {
+  color: var(--green-2);
+  font-size: 23px;
+  font-weight: 600;
+}
+
+.rxn-row-label {
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--muted);
+  text-align: right;
+  white-space: nowrap;
+  direction: rtl;
+  padding-inline-start: 14px !important;
+  border-inline-start: 1.5px dashed rgba(16, 36, 30, 0.22) !important;
+  min-width: 100px;
+}
+
+.rxn-row-label small {
+  display: block;
+  font-size: 8px;
+  font-weight: 500;
+  color: var(--muted);
+  opacity: 0.8;
+  margin-top: 1px;
+}
+
+.rxn-note {
+  font-size: 10.5px;
+  line-height: 1.6;
+  color: var(--muted);
+  text-align: center;
+  margin-top: 7px;
+  font-weight: 500;
+}
+
+.rxn-general-cell {
+  background: var(--mint);
+  border-radius: 8px;
+  padding: 5px 6px !important;
+}
+
+.rxn-general-cell.is-given {
+  background: var(--mint-2);
+}
+
+.rxn-general-cell.is-target {
+  background: var(--coral-soft);
+}
+
+.rxn-mass {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.rxn-vol {
+  display: block;
+  font-size: 9.5px;
+  font-weight: 600;
+  color: var(--ink-2);
+  margin-top: 2px;
+  white-space: nowrap;
+  border-top: 1px dashed rgba(16, 36, 30, 0.18);
+  padding-top: 2px;
+}
+
+.rxn-vol-hint {
+  font-size: 8px;
+  color: var(--muted);
+}
+
+.rxn-problem-cell {
+  background: var(--gold);
+  border-radius: 8px;
+  padding: 4px 6px !important;
+}
+
+.rxn-problem-cell.is-given {
+  background: var(--gold);
+}
+
+.rxn-problem-cell.is-target {
+  background: var(--coral-soft);
+}
+
+.rxn-given {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.rxn-x {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 21px;
+  line-height: 1;
+  font-weight: 800;
+  color: var(--coral);
+}
+
+.rxn-empty {
+  color: var(--muted);
+  opacity: 0.45;
+  font-size: 12px;
+}
+
+.rxn-blank {
+  display: block;
+  color: var(--muted);
+  font-size: 15px;
+  letter-spacing: 0.08em;
+}
+
+.rxn-table .mass-slot {
+  width: 62px;
+  height: 34px;
+  font-size: 11px;
+}
+
+.rxn-block .atomic-note {
+  margin-inline: auto;
+  width: fit-content;
+  max-width: 100%;
+}
+
+.atomic-note {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+  padding: 5px 11px;
+  border: 1.5px dashed rgba(16, 36, 30, 0.2);
+  border-radius: 999px;
+  background: var(--surface-2);
+  font-size: 10.5px;
+  line-height: 1.5;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.atomic-note b {
+  direction: ltr;
+  color: var(--ink);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.atomic-note .ic {
+  width: 14px;
+  height: 14px;
+  color: var(--green-2);
+  flex: none;
+}
+
+.atomic-note.is-on-dark {
+  background: rgba(0, 0, 0, 0.14);
+  border-color: rgba(255, 249, 236, 0.25);
+  color: #cfe5d8;
+}
+
+.atomic-note.is-on-dark b {
+  color: var(--cream);
+}
+
+.atomic-note.is-on-dark .ic {
+  color: var(--lime);
+}
+
 /* تناسب */
 
 .proportion {
@@ -2093,6 +2385,22 @@ sub {
   text-align: start;
   transition: background 0.18s ease, transform 0.18s ease;
   white-space: nowrap;
+}
+
+.reaction-strip .reaction-chip,
+.block-reactions .reaction-chip,
+.art-reactions .reaction-chip {
+  flex: none;
+}
+
+@media (min-width: 761px) {
+  .reaction-strip,
+  .block-reactions,
+  .art-reactions {
+    flex-wrap: wrap;
+    overflow: visible;
+    padding-bottom: 4px;
+  }
 }
 
 .reaction-chip:hover {
@@ -2409,6 +2717,18 @@ sub {
 .key-given { background: var(--mint-2); }
 .key-target { background: var(--coral-soft); }
 .key-line { background: var(--surface); }
+.key-general { background: var(--mint); }
+.key-problem { background: var(--gold); }
+.key-gas { background: var(--sky); }
+
+.board-atomic {
+  font-size: 9.5px;
+  color: var(--muted);
+  margin-top: 7px;
+  text-align: center;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
 
 /* مشهد المختبر */
 
@@ -2441,6 +2761,7 @@ sub {
   z-index: 1;
   flex-wrap: wrap;
   justify-content: center;
+  direction: ltr;
 }
 
 .viz-bubble-wrap {
@@ -2904,7 +3225,7 @@ sub {
 
 .blocks-stage {
   padding: clamp(20px, 3.5vw, 34px);
-  min-height: 330px;
+  min-height: 270px;
 }
 
 .stage-head {
@@ -2964,6 +3285,17 @@ sub {
   align-items: center;
   gap: 6px;
   padding: 0 2px;
+}
+
+.balance-term.term-coef {
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 7px;
+  padding-top: 2px;
+}
+
+.term-coef .balance-formula {
+  padding-bottom: 1px;
 }
 
 .balance-formula {
@@ -3298,7 +3630,7 @@ sub {
 
 .games-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 14px;
 }
 
@@ -3405,16 +3737,33 @@ sub {
   width: 100%;
   margin-top: auto;
   padding-top: 8px;
+  position: relative;
+  z-index: 3;
+}
+
+.game-card-head,
+.game-card h3,
+.game-card > p {
+  position: relative;
+  z-index: 2;
+}
+
+.game-card .game-art {
+  z-index: 0;
 }
 
 .game-best {
   font-size: 10.5px;
   font-weight: 600;
   color: var(--muted);
+  background: rgba(255, 253, 246, 0.78);
+  border-radius: 999px;
+  padding: 2px 8px;
 }
 
 .game-card.is-featured .game-best {
-  color: #a9cbbd;
+  color: #cfe5d8;
+  background: rgba(0, 0, 0, 0.22);
 }
 
 .game-play {
@@ -4037,6 +4386,7 @@ sub {
   gap: clamp(12px, 3vw, 34px);
   width: 100%;
   flex-wrap: wrap;
+  direction: ltr;
 }
 
 .art-side-group {
@@ -4092,11 +4442,168 @@ sub {
   color: var(--lime);
   font-size: 24px;
   flex: none;
+  transition: opacity 0.35s ease, transform 0.35s ease;
 }
 
 .art-arrow small {
   font-size: 9px;
   color: #a9cbbd;
+}
+
+.mol-bond {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: opacity 0.3s ease;
+}
+
+.mol-atom {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.art-stage.is-playing .art-arrow {
+  opacity: 0;
+  visibility: hidden;
+  transform: scale(0.7);
+  transition: none;
+}
+
+.art-stage.is-playing .art-side-group.reactants .mol-bond {
+  animation: bondSnap 0.55s cubic-bezier(0.55, 0, 0.8, 0.4) forwards;
+}
+
+.art-stage.is-playing .art-side-group.reactants .mol-atom {
+  animation: atomJiggle 0.6s ease-in-out;
+}
+
+.art-stage.is-playing .art-side-group.reactants {
+  animation: reactantsFade 0.9s ease 0.55s forwards;
+}
+
+.art-stage.is-playing .art-side-group.products {
+  opacity: 0;
+  animation: productsReveal 0.5s ease 1.15s forwards;
+}
+
+.art-stage.is-playing .art-side-group.products .mol-bond {
+  stroke-dasharray: 60;
+  stroke-dashoffset: 60;
+  animation: drawBond 0.55s ease 1.55s forwards;
+}
+
+@keyframes bondSnap {
+  0% { opacity: 1; transform: scale(1); }
+  40% { opacity: 1; transform: scale(1.25); }
+  100% { opacity: 0; transform: scale(0.25); }
+}
+
+@keyframes atomJiggle {
+  0%, 100% { transform: translate(0, 0); }
+  20% { transform: translate(-1.5px, 1px); }
+  45% { transform: translate(1.5px, -1px); }
+  70% { transform: translate(-1px, -1.5px); }
+}
+
+@keyframes reactantsFade {
+  to { opacity: 0.12; transform: scale(0.92); }
+}
+
+@keyframes productsReveal {
+  to { opacity: 1; }
+}
+
+@keyframes drawBond {
+  to { stroke-dashoffset: 0; }
+}
+
+.art-stage.is-playing .art-side-group.reactants {
+  transform-origin: center;
+}
+
+.art-phase {
+  position: absolute;
+  z-index: 2;
+  inset-inline: 0;
+  bottom: 9px;
+  text-align: center;
+  font-size: 10px;
+  font-weight: 600;
+  color: #cfe5d8;
+  letter-spacing: 0.01em;
+  pointer-events: none;
+  padding: 0 12px;
+  transition: opacity 0.2s ease;
+}
+
+.art-stage.is-playing .art-phase {
+  color: var(--lime);
+}
+
+/* مشهد الذرات: تفكك الروابط وإعادة ترتيبها */
+
+.rx-scene {
+  width: 100%;
+  height: 100%;
+  min-height: 300px;
+  max-height: 420px;
+  display: block;
+  overflow: visible;
+}
+
+.rx-atom {
+  transition: transform 1.4s cubic-bezier(0.45, 0.05, 0.55, 0.95);
+  transform-box: view-box;
+  transform-origin: 0 0;
+}
+
+.rx-bond {
+  stroke: var(--lime);
+  stroke-width: 3;
+  stroke-linecap: round;
+  opacity: 0.55;
+  transition: opacity 0.3s ease;
+}
+
+.rx-bond-end {
+  opacity: 0;
+}
+
+.rx-label {
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  fill: #fff9ec;
+  opacity: 0.82;
+}
+
+.rx-label-product {
+  fill: var(--lime);
+  opacity: 0;
+}
+
+.art-stage.is-transforming .rx-bond-start {
+  opacity: 0;
+}
+
+.art-stage.is-transforming .rx-bond-end {
+  opacity: 0.8;
+  transition: opacity 0.3s ease 1.35s;
+  stroke-dasharray: 800;
+  stroke-dashoffset: 800;
+  animation: rxDraw 0.55s ease 1.55s forwards;
+}
+
+.art-stage.is-transforming .rx-label-reactant {
+  opacity: 0;
+}
+
+.art-stage.is-transforming .rx-label-product {
+  opacity: 1;
+  transition: opacity 0.45s ease 1.7s;
+}
+
+@keyframes rxDraw {
+  to { stroke-dashoffset: 0; }
 }
 
 .art-stage.is-playing .art-side-group.reactants .art-molecule {
@@ -4685,6 +5192,12 @@ sub {
   margin-top: 3px;
 }
 
+.saved-atomic {
+  font-size: 9.5px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
 .saved-meta b {
   color: var(--green-2);
 }
@@ -5108,6 +5621,35 @@ sub {
     font-weight: 600;
   }
 
+  .ws-eq .rxn-table td,
+  .ws-eq .rxn-table th {
+    color: #111 !important;
+  }
+
+  .ws-eq .rxn-general-cell,
+  .ws-eq .rxn-problem-cell {
+    border: 1px solid #999 !important;
+    background: #fff !important;
+  }
+
+  .ws-eq .rxn-row-label {
+    border-left: 1px solid #999 !important;
+    color: #333 !important;
+    font-size: 7.5pt;
+  }
+
+  .ws-eq .atomic-note {
+    border: 1px dashed #999 !important;
+    background: #fff !important;
+    color: #333 !important;
+    font-size: 8pt;
+    margin-top: 4px;
+  }
+
+  .ws-eq .rxn-x {
+    color: #111 !important;
+  }
+
   .ws-answer {
     font-size: 9pt;
     color: #333;
@@ -5354,6 +5896,10 @@ sub {
     flex-wrap: wrap;
     row-gap: 8px;
     padding-bottom: 8px;
+  }
+
+  .games-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 
   .brand {
@@ -5844,6 +6390,61 @@ sub {
 
   .eq-board {
     padding: 14px 6px;
+  }
+
+  .rxn-row-label {
+    display: none;
+  }
+
+  .rxn-table {
+    border-spacing: 2px 3px;
+  }
+
+  .rxn-table td {
+    padding: 2px 3px;
+  }
+
+  .rxn-eq .rxn-term {
+    font-size: 19px;
+  }
+
+  .rxn-general-cell {
+    padding: 3px 4px !important;
+  }
+
+  .rxn-mass,
+  .rxn-given {
+    font-size: 10.5px;
+  }
+
+  .rxn-vol {
+    font-size: 8px;
+  }
+
+  .rxn-x {
+    font-size: 17px;
+  }
+
+  .atomic-note {
+    font-size: 9.5px;
+    padding: 4px 8px;
+    gap: 4px;
+  }
+
+  .board-eq .rxn-eq .rxn-term {
+    font-size: 19px;
+  }
+
+  .board-eq .rxn-mass {
+    font-size: 9.5px;
+  }
+
+  .board-eq .rxn-vol {
+    font-size: 7.5px;
+  }
+
+  .answer-sub b {
+    color: var(--green-2);
   }
 
   .eq-board .eq-formula {

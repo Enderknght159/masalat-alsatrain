@@ -40,6 +40,11 @@
     return String(r);
   }
 
+  function experimentMass(lineMass) {
+    var m = round(lineMass * pick([0.05, 0.1, 0.2]), 1);
+    return Math.max(0.1, m);
+  }
+
   function clamp(n, min, max) {
     return Math.min(max, Math.max(min, n));
   }
@@ -104,7 +109,7 @@
      الحالة والتخزين
      ====================================================================== */
 
-  var STORAGE_KEY = 'satrain.v1';
+  var STORAGE_KEY = 'satrain.v2';
 
   function defaultState() {
     return {
@@ -130,7 +135,7 @@
       lessonBonus: false,
       dailyDays: [],
       daily: { date: '', done: false, answer: 0 },
-      lab: { reactionId: 'water', given: 'H2', target: 'H2O', mass: 8, moles: false },
+      lab: { reactionId: 'water', given: 'H2', target: 'H2O', mass: 0.8, moles: false },
       art: { reactionId: 'water', played: false },
       blocks: { reactionId: 'water', stage: 1 }
     };
@@ -467,7 +472,7 @@
       }
       html += '<div class="' + cls + '">' +
         '<span class="eq-formula">' + coefHTML + Chem.formatFormula(sp.formula) + '</span>' +
-        (masses ? '<span class="eq-mass">' + massNum(sp.lineMass) + ' غ</span>' : '') +
+        (masses ? '<span class="eq-mass">' + massNum(sp.lineMass) + ' g</span>' : '') +
         '</div>';
     });
     html += '</div>';
@@ -481,17 +486,171 @@
         html += '<div class="eq-op' + (tok.arrow ? ' eq-arrow' : '') + '">' + tok.v + '</div>';
         return;
       }
-      html += '<div class="eq-term"><span class="eq-mass">' + massNum(tok.sp.lineMass) + ' غ</span></div>';
+      html += '<div class="eq-term"><span class="eq-mass">' + massNum(tok.sp.lineMass) + ' g</span></div>';
     });
+    html += '</div>';
+    return html;
+  }
+
+  /* ------------------------- السطر العام وسطر المسألة ------------------------- */
+
+  var GASES = {
+    H2: 1, O2: 1, N2: 1, Cl2: 1, F2: 1, CO2: 1, NH3: 1, CH4: 1,
+    C2H6: 1, C3H8: 1, SO2: 1, NO2: 1, NO: 1, H2S: 1, CO: 1
+  };
+
+  function isGas(formula) {
+    return !!GASES[formula];
+  }
+
+  function gasVolume(coef) {
+    return round(coef * 22.4, 1);
+  }
+
+  function atomicMassesText(formulas) {
+    var els = [];
+    (formulas || []).forEach(function (f) {
+      try {
+        Chem.formulaElements(f).forEach(function (el) {
+          if (els.indexOf(el) === -1) els.push(el);
+        });
+      } catch (e) { /* صيغة غير معروفة */ }
+    });
+    return els.map(function (el) {
+      return el + '=' + Chem.ATOMIC[el].mass;
+    }).join(' · ');
+  }
+
+  function atomicNoteHTML(formulas, label, onDark) {
+    var text = atomicMassesText(formulas);
+    if (!text) return '';
+    return '<div class="atomic-note' + (onDark ? ' is-on-dark' : '') + '">' +
+      icon('atom') + '<span>' + (label || 'الكتل الذرية المستخدمة:') + '</span>' +
+      '<b dir="ltr">' + text + '</b></div>';
+  }
+
+  function reactionFormulas(reaction) {
+    return reaction.species.map(function (sp) { return sp.formula; });
+  }
+
+  /*
+   * جدول التفاعل:
+   *   المعادلة الموزونة
+   *   السطر العام  (الكتلة المولية × المعامل، + 22.4 L لكل غاز)
+   *   السطر الثاني (كتلة المعطى تحت مادته، و x تحت المادة المطلوبة)
+   */
+  function rxnTableHTML(reaction, opts) {
+    opts = opts || {};
+    var given = opts.given || null;
+    var target = opts.target || null;
+    var givenMass = opts.givenMass;
+    var showGeneral = opts.general !== false;
+    var showProblem = opts.problem != null ? !!opts.problem : !!(given && target);
+    var noEquation = !!opts.noEquation;
+    var generalSlots = !!opts.generalSlots;
+    var blankGeneral = !!opts.blankGeneral;
+    var blankIndex = typeof opts.blankIndex === 'number' ? opts.blankIndex : -1;
+    var tokens = eqTokens(reaction);
+
+    var html = '<div class="rxn-block"><div class="rxn-table-wrap"><table class="rxn-table" dir="ltr"><tbody>';
+
+    if (!noEquation) {
+      html += '<tr class="rxn-eq">';
+      tokens.forEach(function (tok) {
+        if (tok.t === 'op') {
+          html += '<td class="rxn-op' + (tok.arrow ? ' rxn-arrow' : '') + '">' + tok.v + '</td>';
+          return;
+        }
+        var sp = tok.sp;
+        var idx = reaction.species.indexOf(sp);
+        var cls = 'rxn-term';
+        if (given && sp.formula === given) cls += ' is-given';
+        if (target && sp.formula === target) cls += ' is-target';
+        var coefHTML = idx === blankIndex
+          ? '<span class="quiz-missing">؟</span>'
+          : (sp.coef > 1 ? '<span class="eq-coef">' + sp.coef + '</span>' : '');
+        html += '<td class="' + cls + '"><span class="rxn-formula">' + coefHTML +
+          Chem.formatFormula(sp.formula) + '</span></td>';
+      });
+      html += '<th class="rxn-row-label" scope="row">المعادلة الموزونة</th></tr>';
+    }
+
+    if (showGeneral) {
+      html += '<tr class="rxn-general">';
+      tokens.forEach(function (tok) {
+        if (tok.t === 'op') {
+          html += '<td class="rxn-op"></td>';
+          return;
+        }
+        var sp = tok.sp;
+        var idx = reaction.species.indexOf(sp);
+        var cls = 'rxn-term rxn-general-cell';
+        if (given && sp.formula === given) cls += ' is-given';
+        if (target && sp.formula === target) cls += ' is-target';
+        var content;
+        if (generalSlots) {
+          var mv = blockState.mass[idx];
+          content = '<button class="mass-slot' + (mv != null ? ' is-filled' : '') +
+            '" type="button" data-mass-slot="' + idx + '" aria-label="كتلة ' + esc(sp.formula) + '">' +
+            (mv != null ? massNum(mv) + ' g' : '؟') + '</button>';
+        } else if (blankGeneral) {
+          content = '<span class="rxn-blank">……</span>';
+        } else {
+          content = '<span class="rxn-mass">' + massNum(sp.lineMass) + ' g</span>';
+        }
+        var vol = '';
+        if (isGas(sp.formula) && opts.volumes !== false) {
+          if (blankGeneral) {
+            vol = '<span class="rxn-vol rxn-vol-hint">22.4 L/mol</span>';
+          } else {
+            vol = '<span class="rxn-vol">' + gasVolume(sp.coef) + ' L</span>';
+          }
+        }
+        html += '<td class="' + cls + '">' + content + vol + '</td>';
+      });
+      html += '<th class="rxn-row-label" scope="row">السطر العام<br><small>الكتلة المولية × المعامل</small></th></tr>';
+    }
+
+    if (showProblem) {
+      html += '<tr class="rxn-problem">';
+      tokens.forEach(function (tok) {
+        if (tok.t === 'op') {
+          html += '<td class="rxn-op"></td>';
+          return;
+        }
+        var sp = tok.sp;
+        var cls = 'rxn-term rxn-problem-cell';
+        if (given && sp.formula === given) cls += ' is-given';
+        if (target && sp.formula === target) cls += ' is-target';
+        var content = '<span class="rxn-empty">—</span>';
+        if (given && sp.formula === given) {
+          content = '<span class="rxn-given">' + massNum(givenMass) + ' g</span>';
+        }
+        if (target && sp.formula === target) {
+          content = '<span class="rxn-x">x</span>';
+        }
+        html += '<td class="' + cls + '">' + content + '</td>';
+      });
+      html += '<th class="rxn-row-label" scope="row">السطر الثاني<br><small>أرقام المسألة</small></th></tr>';
+    }
+
+    html += '</tbody></table></div>';
+
+    if (opts.note) {
+      html += '<div class="rxn-note">' + opts.note + '</div>';
+    }
+    if (opts.atomic !== false && (showGeneral || showProblem)) {
+      html += atomicNoteHTML(reactionFormulas(reaction));
+    }
     html += '</div>';
     return html;
   }
 
   function proportionHTML(givenSp, givenMass, targetSp, targetSymbol, hideTarget) {
     return '<div class="proportion">' +
-      '<div class="frac"><span class="num">' + massNum(givenMass) + ' غ <small>' + Chem.formatFormula(givenSp.formula) + '</small></span><span class="den">' + massNum(givenSp.lineMass) + ' غ <small>سطر 2</small></span></div>' +
+      '<div class="frac"><span class="num">' + massNum(givenMass) + ' g <small>' + Chem.formatFormula(givenSp.formula) + '</small></span><span class="den">' + massNum(givenSp.lineMass) + ' g</span></div>' +
       '<span class="prop-eq">=</span>' +
-      '<div class="frac"><span class="num">' + (targetSymbol || 'س') + ' <small>' + Chem.formatFormula(targetSp.formula) + '</small></span><span class="den">' + (hideTarget ? '؟' : massNum(targetSp.lineMass) + ' غ') + ' <small>سطر 2</small></span></div>' +
+      '<div class="frac"><span class="num">' + (targetSymbol || 'x') + ' <small>' + Chem.formatFormula(targetSp.formula) + '</small></span><span class="den">' + (hideTarget ? '؟' : massNum(targetSp.lineMass) + ' g') + '</span></div>' +
       '</div>';
   }
 
@@ -542,9 +701,9 @@
     var svg = '<svg viewBox="0 0 ' + size + ' ' + size + '" width="' + size + '" height="' + size + '" aria-hidden="true" focusable="false">';
     for (var b = 1; b < pos.length; b++) {
       if (atoms.length > 2) {
-        svg += '<line x1="' + pos[0][0] + '" y1="' + pos[0][1] + '" x2="' + pos[b][0] + '" y2="' + pos[b][1] + '" stroke="' + bond + '" stroke-width="' + Math.max(1.4, size * 0.026) + '" stroke-linecap="round"/>';
+        svg += '<line class="mol-bond" x1="' + pos[0][0] + '" y1="' + pos[0][1] + '" x2="' + pos[b][0] + '" y2="' + pos[b][1] + '" stroke="' + bond + '" stroke-width="' + Math.max(1.4, size * 0.026) + '" stroke-linecap="round"/>';
       } else {
-        svg += '<line x1="' + pos[0][0] + '" y1="' + pos[0][1] + '" x2="' + pos[1][0] + '" y2="' + pos[1][1] + '" stroke="' + bond + '" stroke-width="' + Math.max(1.4, size * 0.026) + '" stroke-linecap="round"/>';
+        svg += '<line class="mol-bond" x1="' + pos[0][0] + '" y1="' + pos[0][1] + '" x2="' + pos[1][0] + '" y2="' + pos[1][1] + '" stroke="' + bond + '" stroke-width="' + Math.max(1.4, size * 0.026) + '" stroke-linecap="round"/>';
       }
     }
     atoms.forEach(function (el, i) {
@@ -553,7 +712,7 @@
       var fill = info.color;
       var label = DARK_ELEMENTS.indexOf(el) !== -1 ? '#fff9ec' : '#10241e';
       if (el === 'H' && !opts.light) label = '#10241e';
-      svg += '<circle cx="' + pos[i][0] + '" cy="' + pos[i][1] + '" r="' + r + '" fill="' + fill + '" stroke="#10241e" stroke-width="' + Math.max(1, size * 0.018) + '"/>';
+      svg += '<circle class="mol-atom" cx="' + pos[i][0] + '" cy="' + pos[i][1] + '" r="' + r + '" fill="' + fill + '" stroke="#10241e" stroke-width="' + Math.max(1, size * 0.018) + '"/>';
       if (r > size * 0.09) {
         svg += '<text x="' + pos[i][0] + '" y="' + (pos[i][1] + r * 0.34) + '" text-anchor="middle" font-family="Tahoma, sans-serif" font-size="' + (r * 0.92) + '" font-weight="700" fill="' + label + '">' + el + '</text>';
       }
@@ -626,12 +785,15 @@
 
     var board = $('#heroBoard');
     if (board) {
-      board.innerHTML = eqSequenceHTML(water, { masses: true, given: 'H2', target: 'H2O' });
+      board.innerHTML = rxnTableHTML(water, {
+        given: 'H2', target: 'H2O', givenMass: 0.8,
+        general: true, problem: true, atomic: false
+      });
     }
     var whyEq = $('#whyEq');
     if (whyEq) whyEq.innerHTML = eqSequenceHTML(water, {});
     var whyMass = $('#whyMass');
-    if (whyMass) whyMass.innerHTML = massRowHTML(water);
+    if (whyMass) whyMass.innerHTML = rxnTableHTML(water, { noEquation: true, general: true, problem: false, atomic: false });
 
     var stats = $('#homeStats');
     if (stats) {
@@ -675,9 +837,9 @@
     var ti = (gi + 1 + Math.floor(rng() * (species.length - 1))) % species.length;
     var given = species[gi];
     var target = species[ti];
-    var factors = [0.5, 1, 1.5, 2];
-    var mass = round(reaction.defaultMass * factors[Math.floor(rng() * factors.length)], 1);
-    if (mass < 0.5) mass = 1;
+    var fractions = [0.05, 0.1, 0.2];
+    var mass = round(given.lineMass * fractions[Math.floor(rng() * fractions.length)], 1);
+    if (mass < 0.1) mass = 0.1;
     var answer = round(mass * target.lineMass / given.lineMass, 2);
     return { key: key, reaction: reaction, given: given, target: target, mass: mass, answer: answer };
   }
@@ -704,19 +866,25 @@
     if (done) {
       box.innerHTML =
         '<div class="daily-card-top"><h3>أنجزت مسألة اليوم</h3><span class="tag">✓ مكتملة</span></div>' +
-        '<div class="daily-eq">' + eqSequenceHTML(cfg.reaction, { given: cfg.given.formula, target: cfg.target.formula }) + '</div>' +
-        '<p class="daily-question">الجواب الصحيح: <b>' + massNum(cfg.answer) + ' غ</b> من ' + esc(speciesName(cfg.target)) + '. عد غداً لمسألة جديدة.</p>' +
+        '<div class="daily-eq">' + rxnTableHTML(cfg.reaction, {
+          given: cfg.given.formula, target: cfg.target.formula, givenMass: cfg.mass,
+          general: true, problem: true, atomic: true
+        }) + '</div>' +
+        '<p class="daily-question">الجواب الصحيح: <b>' + massNum(cfg.answer) + ' g</b> من ' + esc(speciesName(cfg.target)) + '. عد غداً لمسألة جديدة.</p>' +
         '<div class="check-row"><span>' + icon('check') + ' +40 نقطة خبرة</span><span>' + icon('calendar') + ' سلسلة ' + streak + ' يوم</span></div>';
       return;
     }
 
     box.innerHTML =
       '<div class="daily-card-top"><h3>مسألة اليوم</h3><span class="tag">' + esc(cfg.reaction.title) + '</span></div>' +
-      '<div class="daily-eq">' + eqSequenceHTML(cfg.reaction, { given: cfg.given.formula, target: cfg.target.formula }) + '</div>' +
-      '<p class="daily-question">إذا تفاعل <b>' + massNum(cfg.mass) + ' غ</b> من ' + esc(speciesName(cfg.given)) +
+      '<div class="daily-eq">' + rxnTableHTML(cfg.reaction, {
+        given: cfg.given.formula, target: cfg.target.formula, givenMass: cfg.mass,
+        general: true, problem: true, atomic: true
+      }) + '</div>' +
+      '<p class="daily-question">إذا تفاعل <b>' + massNum(cfg.mass) + ' g</b> من ' + esc(speciesName(cfg.given)) +
       '، فما كتلة <b>' + esc(speciesName(cfg.target)) + '</b> الناتجة؟</p>' +
       '<form class="daily-form" id="dailyForm">' +
-      '<input id="dailyInput" type="number" inputmode="decimal" step="0.1" min="0" placeholder="الجواب بالغرام" aria-label="جواب مسألة اليوم">' +
+      '<input id="dailyInput" type="number" inputmode="decimal" step="0.1" min="0" placeholder="الجواب بوحدة g" aria-label="جواب مسألة اليوم">' +
       '<button class="btn btn-primary btn-sm" type="submit">تحقّق</button>' +
       '</form>' +
       '<div class="daily-feedback" id="dailyFeedback"></div>';
@@ -803,9 +971,9 @@
   var LESSON = [
     { key: 'idea', short: 'الفكرة الكبرى', title: 'المعادلة تحكي بالمولات' },
     { key: 'molar', short: 'الكتلة المولية', title: 'احسب كتلة المول' },
-    { key: 'line', short: 'السطر الثاني', title: 'اكتب سطر الكميات' },
-    { key: 'prop', short: 'التناسب', title: 'ضع الأرقام في التناسب' },
-    { key: 'check', short: 'التحقق', title: 'اضرب… ثم تحقّق' },
+    { key: 'line', short: 'السطر العام', title: 'اكتب السطر العام' },
+    { key: 'prop', short: 'سطر المسألة', title: 'اكتب سطر المسألة' },
+    { key: 'check', short: 'التناسب والحل', title: 'اضرب… ثم تحقّق' },
     { key: 'done', short: 'الخلاصة', title: 'خمس خطوات إلى الإتقان' }
   ];
 
@@ -828,23 +996,23 @@
     var h2 = water.reactants[0];
     var o2 = water.reactants[1];
     var h2o = water.products[0];
-    var givenMass = 8;
+    var givenMass = 0.8;
     var answer = round(givenMass * h2o.lineMass / h2.lineMass, 2);
 
     if (i === 0) {
       return '<span class="step-kicker">الفكرة الكبرى</span>' +
-        '<h3 class="step-title">المعادلة تحكي بالمولات، لا بالغرامات</h3>' +
-        '<p class="step-lead">المعاملات الصغيرة قبل الصيغ في المعادلة الموزونة تعني <strong>عدد المولات</strong>. لكن الميزان في المختبر يعطيك غرامات، والسطر الثاني هو الجسر بين الاثنين.</p>' +
+        '<h3 class="step-title">المعادلة تحكي بالمولات، لا بالكتل</h3>' +
+        '<p class="step-lead">المعاملات الصغيرة قبل الصيغ في المعادلة الموزونة تعني <strong>عدد المولات</strong>. لكن الميزان في المختبر يعطيك قيماً بوحدة g، والسطران تحت المعادلة هما الجسر: سطر عام للكتل والحجوم، وسطر ثانٍ لأرقام المسألة.</p>' +
         '<div class="lesson-visual is-green">' +
         '<div class="visual-label">2H₂ + O₂ → 2H₂O</div>' +
         eqSequenceHTML(water, {}) +
-        '<div class="eq-caption">2 مول هيدروجين + 1 مول أكسجين → 2 مول ماء</div>' +
+        '<div class="eq-caption">2 mol هيدروجين + 1 mol أكسجين → 2 mol ماء</div>' +
         '</div>' +
         '<div class="note-box">' + icon('atom') +
-        '<div><b>المول</b> هو كمية مادة تحتوي على 6.02×10²³ جسيم. لا تحفظ الرقم الآن؛ المهم أن المعامل يعني مولات، لا غرامات.</div>' +
+        '<div><b>المول</b> هو كمية مادة تحتوي على 6.02×10²³ جسيم. لا تحفظ الرقم الآن؛ المهم أن المعامل يعني مولات، لا كتل.</div>' +
         '</div>' +
         quizBox('idea', 'ماذا يعني المعامل 2 قبل H₂ في المعادلة؟',
-          ['2 غرام من الهيدروجين', '2 مول من الهيدروجين', 'ذرتان فقط من الهيدروجين'], 1,
+          ['2 g من الهيدروجين', '2 mol من الهيدروجين', 'ذرتان فقط من الهيدروجين'], 1,
           'المعامل يعني عدد المولات. الكتلة تعتمد على الكتلة المولية أيضاً.');
     }
 
@@ -857,75 +1025,76 @@
         return '<tr>' +
           '<td class="cell-formula">' + Chem.formatFormula(sp.formula) + '</td>' +
           '<td class="cell-calc">' + calc + '</td>' +
-          '<td class="cell-mass">' + massNum(sp.molarMass) + ' غ/مول</td>' +
+          '<td class="cell-mass">' + massNum(sp.molarMass) + ' g/mol</td>' +
           '</tr>';
       }).join('');
 
       return '<span class="step-kicker">الكتلة المولية</span>' +
-        '<h3 class="step-title">لكل مادة كتلة مول واحدة</h3>' +
-        '<p class="step-lead">الكتلة المولية هي كتلة <strong>مول واحد</strong> بالغرام. نحسبها بجمع كتل الذرات في الصيغة. استخدم القيم المقرّبة في كتابك: H=1 وO=16.</p>' +
+        '<h3 class="step-title">لكل مادة كتلة مول واحد</h3>' +
+        '<p class="step-lead">الكتلة المولية هي كتلة <strong>مول واحد</strong> بوحدة g. نحسبها بجمع كتل الذرات في الصيغة. استخدم القيم المقرّبة في كتابك: H=1 وO=16.</p>' +
         '<div class="lesson-visual">' +
         '<div class="visual-label">حساب الكتلة المولية</div>' +
         '<table class="molar-table"><thead><tr><th>المادة</th><th>الحساب</th><th>الكتلة المولية</th></tr></thead><tbody>' + rows + '</tbody></table>' +
         '</div>' +
+        atomicNoteHTML(['H2', 'O2', 'H2O']) +
         '<div class="note-box is-mint">' + icon('balance') +
-        '<div>لاحظ الفرق: الكتلة المولية لـ H₂ هي 2 غ/مول، لكن كتلة <b>جزيء</b> واحد منه صغيرة جداً. نحن نعمل دائماً بالمولات والغرامات.</div>' +
+        '<div>لاحظ الفرق: الكتلة المولية لـ H₂ هي 2 g/mol، لكن كتلة <b>جزيء</b> واحد منه صغيرة جداً. نحن نعمل دائماً بوحدات mol وg. وهذه هي العلاقة نفسها في كتابك: <span dir="ltr">n = m / M</span>.</div>' +
         '</div>' +
         quizBox('molar', 'ما الكتلة المولية لثاني أكسيد الكربون CO₂؟',
-          ['28 غ/مول', '44 غ/مول', '32 غ/مول'], 1,
-          '12 + (2×16) = 44 غ/مول.');
+          ['28 g/mol', '44 g/mol', '32 g/mol'], 1,
+          '12 + (2×16) = 44 g/mol.');
     }
 
     if (i === 2) {
-      return '<span class="step-kicker">السطر الثاني</span>' +
-        '<h3 class="step-title">اضرب المعامل في الكتلة المولية</h3>' +
-        '<p class="step-lead">هذه هي الخطوة التي يعرفها الجميع: <strong>معامل كل مادة × كتلتها المولية</strong>. الناتج هو سطر الكميات تحت المعادلة.</p>' +
+      return '<span class="step-kicker">السطر العام</span>' +
+        '<h3 class="step-title">الكتلة المولية × المعامل</h3>' +
+        '<p class="step-lead">السطر العام يوضع تحت المعادلة الموزونة. تحت كل مادة نكتب <strong>كتلتها المولية مضروبة بمعاملها</strong>. وإذا كانت المادة غازاً نضيف <strong>حجم مولها 22.4 L</strong> في الشروط النظامية.</p>' +
         '<div class="lesson-visual">' +
-        '<div class="visual-label">السطر الأول والسطر الثاني</div>' +
-        eqSequenceHTML(water, { masses: true, animate: true }) +
-        '<div class="visual-note">2×2 = 4 غ &nbsp;·&nbsp; 1×32 = 32 غ &nbsp;·&nbsp; 2×18 = 36 غ</div>' +
+        '<div class="visual-label">السطر الأول: أرقام عامة لكل مول</div>' +
+        rxnTableHTML(water, { general: true, problem: false, atomic: true, note: 'الغازات هنا: H₂ و O₂. الماء سائل، لذلك لا نكتب له حجماً في السطر العام.' }) +
         '</div>' +
         '<div class="note-box">' + icon('info') +
-        '<div>لا تنسَ المعامل! 2H₂O تعني 2×18 = 36 غ، وليس 18 غ. هذا أكثر خطأ شائع عند الطلاب.</div>' +
+        '<div>في 2H₂: الكتلة 2×2 = 4 g، والحجم 2×22.4 = 44.8 L. في O₂: الكتلة 1×32 = 32 g، والحجم 22.4 L. في H₂O: الكتلة 2×18 = 36 g فقط.</div>' +
         '</div>' +
-        quizBox('line', 'ماذا نكتب تحت O₂ في معادلة الماء؟',
-          ['16 غ', '32 غ', '36 غ'], 1,
-          'معامل O₂ هو 1، وكتلته المولية 32، لذلك نكتب 32 غ.');
+        quizBox('line', 'كم لتراً يشغل 1 mol من O₂ في الشروط النظامية؟',
+          ['22.4 L', '32 L', '44.8 L'], 0,
+          'حجم المول الغازي 22.4 L عند الشروط النظامية، مهما كان نوع الغاز.');
     }
 
     if (i === 3) {
-      return '<span class="step-kicker">التناسب</span>' +
-        '<h3 class="step-title">ضع كل رقم تحت مادته</h3>' +
-        '<p class="step-lead">المعطى هو <strong>8 غ من H₂</strong>. نضع 8 فوق 4، والمجهول «س» فوق 36. المقابلة الصحيحة هي نصف الحل.</p>' +
+      return '<span class="step-kicker">السطر الثاني</span>' +
+        '<h3 class="step-title">ضع أرقام المسألة فقط</h3>' +
+        '<p class="step-lead">السطر الثاني لا ينسخ السطر العام. فيه فقط <strong>كتلة المعطى تحت مادتها</strong>، و<strong>x تحت المادة المطلوبة</strong>. باقي المواد تبقى فارغة.</p>' +
         '<div class="lesson-visual is-mint">' +
-        '<div class="visual-label">تناسب مسألة الماء</div>' +
-        proportionHTML(h2, givenMass, h2o) +
-        '<div class="visual-note">8 غ H₂ تقابل 4 غ H₂ في السطر الثاني… و«س» تقابل 36 غ H₂O.</div>' +
+        '<div class="visual-label">مسألة: 0.8 g من H₂ — المطلوب كتلة الماء</div>' +
+        rxnTableHTML(water, { given: 'H2', target: 'H2O', givenMass: givenMass, general: true, problem: true, atomic: true }) +
+        '<div class="visual-note" style="margin-top:12px">ثم نكتب التناسب من السطرين:</div>' +
+        proportionHTML(h2, givenMass, h2o, 'x') +
         '</div>' +
         '<div class="note-box is-coral">' + icon('target') +
-        '<div>القاعدة: ضع المعطى فوق كميته في السطر الثاني، والمجهول فوق كمية المادة المطلوبة. لا تخلط بين مادتين مختلفتين.</div>' +
+        '<div>المقابلة الصحيحة: 0.8 g فوق 4 g (المادة نفسها)، وx فوق 36 g (المادة المطلوبة نفسها). لا تخلط بين مادتين.</div>' +
         '</div>' +
-        quizBox('prop', 'إذا كان 4 غ من H₂ تعطي 36 غ ماء، فكم تعطي 8 غ؟',
-          ['36 غ', '54 غ', '72 غ'], 2,
-          'ضاعفنا المعطى من 4 إلى 8، لذلك يتضاعف الناتج من 36 إلى 72 غ.');
+        quizBox('prop', 'أين نضع 0.8 g من H₂ في سطر المسألة؟',
+          ['تحت H₂ في السطر الثاني', 'تحت O₂ في السطر الثاني', 'فوق سهم المعادلة'], 0,
+          'الكتلة المعطاة توضع تحت المادة نفسها في السطر الثاني.');
     }
 
     if (i === 4) {
       return '<span class="step-kicker">الحساب والتحقق</span>' +
         '<h3 class="step-title">اضرب بالتقاطع… ثم اطمئن</h3>' +
-        '<p class="step-lead">نضرب الطرفين بالتقاطع: <strong>س = (8 × 36) ÷ 4 = 72 غ</strong>. وبعد الحساب نتحقق بعدد المولات، لا بالحدس فقط.</p>' +
+        '<p class="step-lead">نضرب الطرفين بالتقاطع: <strong>x = (0.8 × 36) ÷ 4 = 7.2 g</strong>. وبعد الحساب نتحقق بعدد المولات، لا بالحدس فقط.</p>' +
         '<div class="lesson-visual is-green">' +
         '<div class="visual-label">النتيجة</div>' +
-        '<div class="result-big"><strong>' + massNum(answer) + '</strong><span>غرام من الماء</span></div>' +
-        '<div class="eq-caption">س = (8 × 36) ÷ 4</div>' +
+        '<div class="result-big"><strong>' + massNum(answer) + '</strong><span>g من الماء</span></div>' +
+        '<div class="eq-caption" dir="ltr">x = (0.8 × 36) ÷ 4 = 7.2 g</div>' +
         '<div class="check-row">' +
-        '<span>' + icon('check') + ' 8 غ H₂ = 4 مول</span>' +
-        '<span>' + icon('check') + ' 72 غ H₂O = 4 مول</span>' +
+        '<span>' + icon('check') + ' 0.8 g H₂ = 0.4 mol</span>' +
+        '<span>' + icon('check') + ' 7.2 g H₂O = 0.4 mol</span>' +
         '<span>' + icon('check') + ' الكتلة محفوظة</span>' +
         '</div>' +
         '</div>' +
         '<div class="note-box">' + icon('shield') +
-        '<div>تحقق سريع: عدد مولات الماء الناتج يجب أن يحقق نسبة المعاملات. هنا 2H₂ → 2H₂O، أي 1:1، و4 مول تعطي 4 مول.</div>' +
+        '<div>تحقق سريع: عدد مولات الماء الناتج يجب أن يحقق نسبة المعاملات. هنا 2H₂ → 2H₂O، أي 1:1، و0.4 mol تعطي 0.4 mol.</div>' +
         '</div>' +
         quizBox('check', 'ما أفضل طريقة للتحقق من صحة الجواب؟',
           ['مقارنة الرقم بالمعطى فقط', 'إعادة الحساب بعدد المولات', 'حذف الوحدات'], 1,
@@ -935,7 +1104,7 @@
     var stepsList = DATA.solutionSteps.map(function (s) { return '<li>' + esc(s) + '</li>'; }).join('');
     return '<span class="step-kicker">الخلاصة</span>' +
       '<h3 class="step-title">خمس خطوات، وكل معادلة تصبح سهلة</h3>' +
-      '<p class="step-lead">أعد ترتيب ذاكرتك: <strong>وازن، احسب الكتلة المولية، اكتب السطر الثاني، ضع التناسب، ثم تحقق</strong>. هذه هي مسألة السطرين كاملة.</p>' +
+      '<p class="step-lead">أعد ترتيب ذاكرتك: <strong>وازن، اكتب السطر العام، اكتب سطر المسألة، ضع التناسب، ثم تحقق</strong>. هذه هي مسألة السطرين كاملة.</p>' +
       '<div class="lesson-visual">' +
       '<div class="visual-label">وصفة الحل</div>' +
       '<ol class="solution-mini">' + stepsList + '</ol>' +
@@ -1137,9 +1306,9 @@
     var input = $('#massInput');
     var m = labMass(reaction);
     if (range) {
-      range.min = reaction.maxMass <= 60 ? 0.5 : 1;
+      range.min = reaction.maxMass <= 60 ? 0.1 : 1;
       range.max = reaction.maxMass;
-      range.step = reaction.maxMass <= 100 ? 0.5 : reaction.maxMass <= 400 ? 1 : 5;
+      range.step = reaction.maxMass <= 100 ? 0.1 : reaction.maxMass <= 400 ? 1 : 5;
       range.value = m;
     }
     if (input) {
@@ -1147,7 +1316,7 @@
       input.value = m;
     }
     var rm = $('#rangeMax');
-    if (rm) rm.textContent = reaction.maxMass + ' غ';
+    if (rm) rm.textContent = reaction.maxMass + ' g';
   }
 
   function setLabReaction(id, extra) {
@@ -1177,10 +1346,13 @@
 
     var board = $('#labBoard');
     if (board) {
-      board.innerHTML = eqSequenceHTML(reaction, {
-        masses: true,
+      board.innerHTML = rxnTableHTML(reaction, {
         given: given.formula,
-        target: target.formula
+        target: target.formula,
+        givenMass: mass,
+        general: true,
+        problem: true,
+        atomic: true
       });
     }
     var title = $('#labReactionTitle');
@@ -1193,9 +1365,9 @@
     var ratio = round(target.lineMass / given.lineMass, 2);
     var why = $('#labWhy');
     if (why) {
-      why.textContent = 'في المعادلة، كل ' + massNum(given.lineMass) + ' غ من ' + speciesName(given) +
-        ' تقابل ' + massNum(target.lineMass) + ' غ من ' + speciesName(target) + '. كتلتك المعطاة ' +
-        massNum(mass) + ' غ، لذلك نضرب ' + massNum(mass) + ' × (' + massNum(target.lineMass) + ' ÷ ' + massNum(given.lineMass) + ').';
+      why.textContent = 'في المعادلة، كل ' + massNum(given.lineMass) + ' g من ' + speciesName(given) +
+        ' تقابل ' + massNum(target.lineMass) + ' g من ' + speciesName(target) + '. كتلتك المعطاة ' +
+        massNum(mass) + ' g، لذلك نضرب ' + massNum(mass) + ' × (' + massNum(target.lineMass) + ' ÷ ' + massNum(given.lineMass) + ').';
     }
 
     renderLabViz(given, target, mass, answer);
@@ -1204,9 +1376,9 @@
     if (ansBox) {
       ansBox.innerHTML =
         '<div class="answer-label"><small>كتلة المادة المطلوبة</small><strong>' + esc(speciesName(target)) + '</strong></div>' +
-        '<div class="answer-value"><b>' + massNum(answer) + '</b><span>غرام</span></div>' +
-        '<div class="answer-sub">تعادل ' + num(answer / target.molarMass) + ' مول من ' + Chem.formatFormula(target.formula) +
-        (state.lab.moles ? '<br>و' + num(mass / given.molarMass) + ' مول من المعطى' : '') + '</div>';
+        '<div class="answer-value"><b>' + massNum(answer) + '</b><span>g</span></div>' +
+        '<div class="answer-sub">تعادل ' + num(answer / target.molarMass) + ' mol من ' + Chem.formatFormula(target.formula) +
+        (state.lab.moles ? '<br>و' + num(mass / given.molarMass) + ' mol من المعطى' : '') + '</div>';
     }
 
     renderLabSteps(reaction, given, target, mass, answer);
@@ -1223,11 +1395,11 @@
       '<div class="viz-row">' +
       '<div class="viz-bubble-wrap">' + moleculeSVG(given.formula, 42) +
       '<div class="viz-bubble is-given"><i style="height:' + gH + '%"></i></div>' +
-      '<div class="viz-bubble-label"><b>' + massNum(mass) + ' غ</b>' + esc(speciesName(given)) + '</div></div>' +
+      '<div class="viz-bubble-label"><b>' + massNum(mass) + ' g</b>' + esc(speciesName(given)) + '</div></div>' +
       '<div class="viz-arrow">→</div>' +
       '<div class="viz-bubble-wrap">' + moleculeSVG(target.formula, 42) +
       '<div class="viz-bubble is-target"><i style="height:' + tH + '%"></i></div>' +
-      '<div class="viz-bubble-label"><b>' + massNum(answer) + ' غ</b>' + esc(speciesName(target)) + '</div></div>' +
+      '<div class="viz-bubble-label"><b>' + massNum(answer) + ' g</b>' + esc(speciesName(target)) + '</div></div>' +
       '</div>';
   }
 
@@ -1239,30 +1411,38 @@
     steps.push({
       title: 'اكتب المعادلة الموزونة',
       body: '<div class="eq-showcase">' + eqSequenceHTML(reaction, {}) + '</div>' +
-        '<p>المعاملات تعطينا النِّسَب: ' + reaction.species.map(function (s) {
+        '<p>المعاملات (الأمثال التفاعلية) تعطينا النِّسَب: ' + reaction.species.map(function (s) {
           return (s.coef > 1 ? s.coef + ' ' : '') + Chem.formatFormula(s.formula);
         }).join(' + ') + '.</p>'
     });
 
     steps.push({
-      title: 'اكتب السطر الثاني',
-      body: '<div class="eq-showcase">' + eqSequenceHTML(reaction, { masses: true }) + '</div>' +
-        '<p>' + reaction.species.map(function (s) {
-          return '<span dir="ltr">' + s.coef + ' × ' + massNum(s.molarMass) + ' = ' + massNum(s.lineMass) + ' غ</span>';
-        }).join(' &nbsp;·&nbsp; ') + '</p>'
+      title: 'اكتب السطر العام',
+      body: rxnTableHTML(reaction, { general: true, problem: false, atomic: false, note: 'الكتل المولية × المعاملات، مع حجم 22.4 L لكل مول غازي.' }) +
+        '<p>نضرب معامل كل مادة في كتلتها المولية. الغازات: نضيف 22.4 L لكل مول. الماء سائل هنا، لذلك لا نكتب له حجماً.</p>'
     });
 
     steps.push({
-      title: 'ضع المعطى والمجهول',
-      body: proportionHTML(given, mass, target) +
-        '<p>المعطى ' + massNum(mass) + ' غ من ' + esc(speciesName(given)) + '، والمجهول س كتلة ' +
+      title: 'اكتب السطر الثاني',
+      body: rxnTableHTML(reaction, {
+        given: given.formula, target: target.formula, givenMass: mass,
+        general: true, problem: true, atomic: false
+      }) +
+        '<p>ضع ' + massNum(mass) + ' g تحت ' + esc(speciesName(given)) + '، و x تحت ' +
+        esc(speciesName(target)) + '. باقي المواد تبقى فارغة.</p>'
+    });
+
+    steps.push({
+      title: 'اكتب التناسب',
+      body: proportionHTML(given, mass, target, 'x') +
+        '<p>المعطى ' + massNum(mass) + ' g من ' + esc(speciesName(given)) + '، والمجهول x كتلة ' +
         esc(speciesName(target)) + '.</p>'
     });
 
     steps.push({
       title: 'حل التناسب',
-      body: '<div class="math-line">س = (' + massNum(mass) + ' × ' + massNum(target.lineMass) + ') ÷ ' +
-        massNum(given.lineMass) + ' = <b>' + massNum(answer) + ' غ</b></div>' +
+      body: '<div class="math-line">x = (' + massNum(mass) + ' × ' + massNum(target.lineMass) + ') ÷ ' +
+        massNum(given.lineMass) + ' = <b>' + massNum(answer) + ' g</b></div>' +
         '<p>نضرب الطرفين بالتقاطع ثم نقسم على الكمية المقابلة للمادة المعطاة.</p>'
     });
 
@@ -1272,11 +1452,11 @@
       steps.push({
         title: 'طريق ثانٍ: المولات',
         body: '<div class="math-line">n(' + Chem.formatFormula(given.formula) + ') = ' + massNum(mass) + ' ÷ ' +
-          massNum(given.molarMass) + ' = ' + num(gm) + ' مول</div>' +
+          massNum(given.molarMass) + ' = ' + num(gm) + ' mol</div>' +
           '<div class="math-line">n(' + Chem.formatFormula(target.formula) + ') = ' + num(gm) + ' × (' +
-          target.coef + ' ÷ ' + given.coef + ') = ' + num(tm) + ' مول</div>' +
+          target.coef + ' ÷ ' + given.coef + ') = ' + num(tm) + ' mol</div>' +
           '<div class="math-line">m = ' + num(tm) + ' × ' + massNum(target.molarMass) + ' = <b>' +
-          massNum(answer) + ' غ</b></div>' +
+          massNum(answer) + ' g</b></div>' +
           '<p>الطريقان يجب أن يعطيا النتيجة نفسها. هذه أفضل طريقة للتحقق.</p>'
       });
     }
@@ -1288,7 +1468,8 @@
         '<span>' + icon('check') + ' مولات الناتج: ' + num(answer / target.molarMass) + '</span>' +
         '<span>' + icon('check') + ' الكتلة محفوظة</span>' +
         '</div>' +
-        '<p>كتلة المعادلة كاملة (بالنسب): ' + massNum(reaction.totalMass) + ' غ. النسبة بين السطرين ثابتة مهما تغيّر المعطى.</p>'
+        '<p>كتلة المتفاعلات في المعادلة (بالنسب): ' + massNum(sideMass(reaction)) +
+        ' g، وهي تساوي كتلة النواتج. النسبة بين السطرين ثابتة مهما تغيّر المعطى.</p>'
     });
 
     box.innerHTML = steps.map(function (s, i) {
@@ -1303,10 +1484,16 @@
     var box = $('#labMeta');
     if (!box) return;
     box.innerHTML =
-      '<span class="meta-chip">' + icon('atom') + ' مولات المعطى <b>' + num(mass / given.molarMass) + '</b></span>' +
-      '<span class="meta-chip">' + icon('drop') + ' مولات الناتج <b>' + num(answer / target.molarMass) + '</b></span>' +
-      '<span class="meta-chip">' + icon('scale') + ' كتلة المعادلة <b>' + massNum(reaction.totalMass) + ' غ</b></span>' +
+      '<span class="meta-chip">' + icon('atom') + ' مولات المعطى <b>' + num(mass / given.molarMass) + ' mol</b></span>' +
+      '<span class="meta-chip">' + icon('drop') + ' مولات الناتج <b>' + num(answer / target.molarMass) + ' mol</b></span>' +
+      '<span class="meta-chip">' + icon('scale') + ' كتلة المتفاعلات <b>' + massNum(sideMass(reaction)) + ' g</b></span>' +
       '<span class="meta-chip">' + icon('check') + ' ' + (Math.abs((mass / given.molarMass) - (answer / target.molarMass) * (given.coef / target.coef)) < 0.0001 ? 'النسبة سليمة' : 'راجع الحساب') + '</span>';
+  }
+
+  function sideMass(reaction) {
+    return round(reaction.reactants.reduce(function (sum, sp) {
+      return sum + sp.coef * sp.molarMass;
+    }, 0), 1);
   }
 
   var labFrame = null;
@@ -1345,7 +1532,7 @@
     var input = $('#massInput');
     if (input && document.activeElement !== input) input.value = state.lab.mass;
     var maxEl = $('#rangeMax');
-    if (maxEl) maxEl.textContent = reaction.maxMass + ' غ';
+    if (maxEl) maxEl.textContent = reaction.maxMass + ' g';
     var molesBtn = $('#labMolesBtn');
     if (molesBtn) {
       molesBtn.setAttribute('aria-pressed', state.lab.moles ? 'true' : 'false');
@@ -1459,7 +1646,7 @@
         ans.scrollIntoView({ behavior: reducedMotion() ? 'auto' : 'smooth', block: 'center' });
       }
       burst(30);
-      toast('الجواب: ' + massNum(data.answer) + ' غ من ' + speciesName(data.target), '', 'check');
+      toast('الجواب: ' + massNum(data.answer) + ' g من ' + speciesName(data.target), '', 'check');
     });
 
     $('#labRandomBtn').addEventListener('click', function () {
@@ -1467,12 +1654,11 @@
       var species = r.species;
       var gi = Math.floor(Math.random() * species.length);
       var ti = (gi + 1 + Math.floor(Math.random() * (species.length - 1))) % species.length;
-      var factors = [0.5, 1, 1.5, 2, 2.5];
-      var m = round(r.defaultMass * pick(factors), 1);
+      var m = experimentMass(species[gi].lineMass);
       setLabReaction(r.id, {
         given: species[gi].formula,
         target: species[ti].formula,
-        mass: clamp(m, 0.5, r.maxMass)
+        mass: clamp(m, 0.1, r.maxMass)
       });
       SFX.pop();
       toast('مسألة جديدة: ' + r.title, '', 'refresh');
@@ -1579,7 +1765,7 @@
       var idx = reaction.species.indexOf(tok.sp);
       if (blockState.stage === 1) {
         var v = blockState.coef[idx];
-        html += '<div class="balance-term">' +
+        html += '<div class="balance-term term-coef">' +
           '<button class="coef-slot' + (v != null ? ' is-filled' : '') + '" type="button" data-coef-slot="' + idx + '" aria-label="معامل ' + esc(tok.sp.formula) + '">' +
           (v != null ? v : '؟') + '</button>' +
           '<span class="balance-formula">' + Chem.formatFormula(tok.sp.formula) + '</span>' +
@@ -1589,7 +1775,7 @@
         html += '<div class="balance-term">' +
           '<span class="balance-formula"><span class="eq-coef">' + tok.sp.coef + '</span>' + Chem.formatFormula(tok.sp.formula) + '</span>' +
           '<button class="mass-slot' + (mv != null ? ' is-filled' : '') + '" type="button" data-mass-slot="' + idx + '" aria-label="كتلة ' + esc(tok.sp.formula) + '">' +
-          (mv != null ? massNum(mv) + ' غ' : '؟') + '</button>' +
+          (mv != null ? massNum(mv) + ' g' : '؟') + '</button>' +
           '</div>';
       }
     });
@@ -1605,7 +1791,7 @@
       vals.map(function (v) {
         var selected = kind === 'coef' ? blockState.coefSel === v : blockState.massSel === v;
         return '<button class="block-tile' + (kind === 'mass' ? ' mass' : '') + (selected ? ' is-selected' : '') + '" type="button" draggable="true" data-tile="' + kind + '" data-val="' + v + '">' +
-          (kind === 'coef' ? v : massNum(v) + ' غ') + '</button>';
+          (kind === 'coef' ? v : massNum(v) + ' g') + '</button>';
       }).join('') +
       '</div>';
   }
@@ -1625,26 +1811,33 @@
   function stageOneHTML(reaction) {
     return '<div class="stage-head"><span class="stage-head-num">1</span><div>' +
       '<h3>وازن المعادلة</h3>' +
-      '<p>ضع المعامل الصحيح أمام كل مادة. تذكّر: عدد ذرات كل عنصر يجب أن يتساوى في الطرفين.</p>' +
+      '<p>اختر مكعباً من الأسفل ثم اضغط الفراغ قبل كل صيغة. الأرقام هنا هي <b>معاملات (أمثال تفاعلية)</b>، وليست عدد ذرات. يجب أن يتساوى عدد ذرات كل عنصر في الطرفين.</p>' +
       '</div></div>' +
       '<div class="balance-board">' + blockBoardHTML(reaction) + '</div>' +
+      atomicNoteHTML(reactionFormulas(reaction)) +
       blockTrayHTML(reaction) +
       '<div class="stage-actions">' +
-      '<span class="stage-status">' + (blockState.coef.filter(function (v) { return v != null; }).length + ' / ' + reaction.species.length + ' فراغات مملوءة') + '</span>' +
+      '<span class="stage-status">' + (blockState.coef.filter(function (v) { return v != null; }).length + ' من ' + reaction.species.length + ' فراغات مملوءة') + '</span>' +
       '<button class="btn btn-primary btn-sm" type="button" data-check="1">' + icon('check') + ' تحقق من الموازنة</button>' +
       '</div>';
   }
 
   function stageTwoHTML(reaction) {
     return '<div class="stage-head"><span class="stage-head-num">2</span><div>' +
-      '<h3>اكتب السطر الثاني</h3>' +
-      '<p>ضع تحت كل مادة كتلتها في السطر الثاني: المعامل × الكتلة المولية.</p>' +
+      '<h3>اكتب السطر العام</h3>' +
+      '<p>ضع تحت كل مادة <b>الكتلة المولية × المعامل</b>. الغازات تحصل أيضاً على <b>22.4 L</b> لكل مول. اختر مكعب كتلة ثم اضغط الفراغ تحتها.</p>' +
       '</div></div>' +
-      '<div class="balance-board">' + blockBoardHTML(reaction) + '</div>' +
+      rxnTableHTML(reaction, {
+        general: true,
+        generalSlots: true,
+        problem: false,
+        atomic: true,
+        note: 'الغازات: حجم مول واحد = 22.4 L في الشروط النظامية.'
+      }) +
       blockTrayHTML(reaction) +
       '<div class="stage-actions">' +
-      '<span class="stage-status">' + (blockState.mass.filter(function (v) { return v != null; }).length + ' / ' + reaction.species.length + ' فراغات مملوءة') + '</span>' +
-      '<button class="btn btn-primary btn-sm" type="button" data-check="2">' + icon('check') + ' تحقق من السطر الثاني</button>' +
+      '<span class="stage-status">' + (blockState.mass.filter(function (v) { return v != null; }).length + ' من ' + reaction.species.length + ' فراغات مملوءة') + '</span>' +
+      '<button class="btn btn-primary btn-sm" type="button" data-check="2">' + icon('check') + ' تحقق من السطر العام</button>' +
       '</div>';
   }
 
@@ -1654,39 +1847,47 @@
     var givenMass = reaction.defaultMass;
     var vals = blockTrayValues();
     return '<div class="stage-head"><span class="stage-head-num">3</span><div>' +
-      '<h3>ركّب التناسب واحسب س</h3>' +
-      '<p>المعطى: <b>' + massNum(givenMass) + ' غ</b> من ' + esc(speciesName(given)) + '. ضع الأرقام في أماكنها ثم احسب كتلة ' + esc(speciesName(target)) + '.</p>' +
+      '<h3>اكتب سطر المسألة وركّب التناسب</h3>' +
+      '<p>المعطى: <b>' + massNum(givenMass) + ' g</b> من ' + esc(speciesName(given)) + '. في السطر الثاني نضع المعطى تحت مادته و<b>x</b> تحت ' + esc(speciesName(target)) + '، ثم نركّب التناسب.</p>' +
       '</div></div>' +
+      rxnTableHTML(reaction, {
+        given: given.formula,
+        target: target.formula,
+        givenMass: givenMass,
+        general: true,
+        problem: true,
+        atomic: true
+      }) +
       '<div class="prop-builder">' +
       '<div class="prop-frac">' +
       '<button class="prop-slot' + (blockState.prop[0] != null ? ' is-filled' : '') + '" type="button" data-prop-slot="0">' +
-      (blockState.prop[0] != null ? massNum(blockState.prop[0]) + ' غ' : '؟') + '</button>' +
+      (blockState.prop[0] != null ? massNum(blockState.prop[0]) + ' g' : '؟') + '</button>' +
       '<div class="prop-bar"></div>' +
       '<button class="prop-slot' + (blockState.prop[1] != null ? ' is-filled' : '') + '" type="button" data-prop-slot="1">' +
-      (blockState.prop[1] != null ? massNum(blockState.prop[1]) + ' غ' : '؟') + '</button>' +
+      (blockState.prop[1] != null ? massNum(blockState.prop[1]) + ' g' : '؟') + '</button>' +
       '</div>' +
       '<span class="prop-eq-sign">=</span>' +
       '<div class="prop-frac">' +
-      '<span class="prop-slot is-fixed">س</span>' +
+      '<span class="prop-slot is-fixed">x</span>' +
       '<div class="prop-bar"></div>' +
       '<button class="prop-slot' + (blockState.prop[2] != null ? ' is-filled' : '') + '" type="button" data-prop-slot="2">' +
-      (blockState.prop[2] != null ? massNum(blockState.prop[2]) + ' غ' : '؟') + '</button>' +
+      (blockState.prop[2] != null ? massNum(blockState.prop[2]) + ' g' : '؟') + '</button>' +
       '</div>' +
       '</div>' +
       '<div class="block-tray">' +
-      '<div class="tray-label">مكعبات التناسب</div>' +
+      '<div class="tray-label">مكعبات التناسب: ضع 3 أرقام فقط</div>' +
       vals.map(function (v) {
         var selected = blockState.propSel === v;
-        return '<button class="block-tile mass' + (selected ? ' is-selected' : '') + '" type="button" draggable="true" data-tile="prop" data-val="' + v + '">' + massNum(v) + ' غ</button>';
+        return '<button class="block-tile mass' + (selected ? ' is-selected' : '') + '" type="button" draggable="true" data-tile="prop" data-val="' + v + '">' + massNum(v) + ' g</button>';
       }).join('') +
       '</div>' +
       '<div class="answer-input-row">' +
-      '<label for="blockAnswer">س =</label>' +
+      '<label for="blockAnswer">x =</label>' +
       '<input id="blockAnswer" type="number" step="0.1" min="0" value="' + esc(blockState.answer) + '" placeholder="؟">' +
-      '<span class="unit">غرام</span>' +
+      '<span class="unit">g</span>' +
       '</div>' +
       '<div class="stage-actions">' +
-      '<span class="stage-status">' + (blockState.prop.filter(function (v) { return v != null; }).length + ' / 3 أرقام موضوعة') + '</span>' +
+      '<span class="stage-status">' + (blockState.prop.filter(function (v) { return v != null; }).length + ' من 3 أرقام موضوعة') + '</span>' +
       '<button class="btn btn-primary btn-sm" type="button" data-check="3">' + icon('check') + ' تحقق من الحل</button>' +
       '</div>';
   }
@@ -1698,9 +1899,12 @@
     return '<div class="workshop-done">' +
       '<div class="done-medal">' + icon('crown') + '</div>' +
       '<h3>أكملت الورشة</h3>' +
-      '<p>وازنت المعادلة، كتبت السطر الثاني، وركّبت التناسب. هذه هي مسألة السطرين كاملة.</p>' +
-      '<div class="done-eq">' + eqSequenceHTML(reaction, { masses: true }) + '</div>' +
-      '<div class="done-answer">الجواب: <b>' + massNum(answer) + ' غ</b> من ' + esc(speciesName(target)) + '</div>' +
+      '<p>وازنت المعادلة، كتبت السطر العام، ثم سطر المسألة وركّبت التناسب. هذه هي مسألة السطرين كاملة.</p>' +
+      '<div class="done-eq">' + rxnTableHTML(reaction, {
+        given: given.formula, target: target.formula, givenMass: reaction.defaultMass,
+        general: true, problem: true, atomic: true
+      }) + '</div>' +
+      '<div class="done-answer">الجواب: <b>' + massNum(answer) + ' g</b> من ' + esc(speciesName(target)) + '</div>' +
       '<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:16px">' +
       '<button class="btn btn-primary btn-sm" type="button" data-new-block="1">' + icon('refresh') + ' تفاعل جديد</button>' +
       '<button class="btn btn-ghost btn-sm" data-view="lab">' + icon('flask') + ' جرّب في المختبر</button>' +
@@ -1736,7 +1940,7 @@
 
     var count = blockProgress();
     var xpBadge = $('#blocksXp');
-    if (xpBadge) xpBadge.innerHTML = icon('blocks') + ' <span>' + count + '/3 مراحل</span>';
+    if (xpBadge) xpBadge.innerHTML = icon('blocks') + ' <span>' + count + ' من 3 مراحل</span>';
 
     var allDone = blockState.done[1] && blockState.done[2] && blockState.done[3];
     if (allDone) {
@@ -1825,8 +2029,8 @@
     var slots = $$('#blocksStage [data-mass-slot]');
     if (ok) {
       blockState.done[2] = true;
-      blockSetFeedback('سطر الكميات صحيح! الآن ركّب التناسب.', 'ok');
-      awardXP(30, 'كتبت السطر الثاني');
+      blockSetFeedback('السطر العام صحيح! الآن اكتب سطر المسألة وركّب التناسب.', 'ok');
+      awardXP(30, 'كتبت السطر العام');
       SFX.win();
       burst(70);
       blockState.stage = 3;
@@ -1860,7 +2064,7 @@
       blockState.prop.forEach(function (v, i) {
         if (slots[i]) slots[i].classList.add(Math.abs(v - expected[i]) < 0.001 ? 'is-right' : 'is-wrong');
       });
-      blockSetFeedback('التناسب غير مرتّب. المعطى فوق كميته في السطر الثاني، والمجهول فوق كتلة المطلوب.', 'bad');
+      blockSetFeedback('التناسب غير مرتّب. المعطى في السطر الثاني فوق كميته في السطر العام، وx فوق كتلة المطلوب.', 'bad');
       SFX.bad();
       return;
     }
@@ -1868,7 +2072,7 @@
     if (!isFinite(val) || Math.abs(val - answer) > Math.max(0.1, answer * 0.01)) {
       var inp = $('#blockAnswer');
       if (inp) inp.classList.add('is-wrong');
-      blockSetFeedback('التناسب صحيح، لكن الحساب النهائي غير دقيق. س = (' + massNum(reaction.defaultMass) + ' × ' + massNum(target.lineMass) + ') ÷ ' + massNum(given.lineMass) + '.', 'bad');
+      blockSetFeedback('التناسب صحيح، لكن الحساب النهائي غير دقيق. x = (' + massNum(reaction.defaultMass) + ' × ' + massNum(target.lineMass) + ') ÷ ' + massNum(given.lineMass) + '.', 'bad');
       SFX.bad();
       return;
     }
@@ -1891,11 +2095,11 @@
       var j = blockState.mass.findIndex(function (v, i) { return v !== reaction.species[i].lineMass; });
       if (j === -1) j = 0;
       var sp = reaction.species[j];
-      blockSetFeedback('تلميح: كتلة ' + Chem.formatFormula(sp.formula) + ' = ' + sp.coef + ' × ' + massNum(sp.molarMass) + ' = ' + massNum(sp.lineMass) + ' غ.', '');
+      blockSetFeedback('تلميح: كتلة ' + Chem.formatFormula(sp.formula) + ' = ' + sp.coef + ' × ' + massNum(sp.molarMass) + ' = ' + massNum(sp.lineMass) + ' g.', '');
     } else {
       var given = reaction.species.filter(function (s) { return s.formula === reaction.givenId; })[0] || reaction.species[0];
       var target = reaction.species.filter(function (s) { return s.formula === reaction.targetId; })[0] || reaction.species[1];
-      blockSetFeedback('تلميح: ضع ' + massNum(reaction.defaultMass) + ' غ فوق ' + massNum(given.lineMass) + ' غ، و«س» فوق ' + massNum(target.lineMass) + ' غ.', '');
+      blockSetFeedback('تلميح: ضع ' + massNum(reaction.defaultMass) + ' g فوق ' + massNum(given.lineMass) + ' g، وx فوق ' + massNum(target.lineMass) + ' g.', '');
     }
     renderBlocks();
     SFX.click();
@@ -2140,6 +2344,87 @@
     }
   }
 
+  function gameArtSVG(id) {
+    var ink = '#10241e';
+    var green = '#0c4a3f';
+    var mint = '#cdecdc';
+    var lime = '#d8f27e';
+    var gold = '#ffc94a';
+    var coral = '#f36b45';
+    var cream = '#fff9f0';
+    var base = 'viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"';
+    var stroke = 'stroke="' + ink + '" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"';
+    if (id === 'boss') {
+      return '<svg ' + base + '>' +
+        '<g ' + 'stroke="' + lime + '" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">' +
+        '<path d="M45 62l20 20 35-46 35 46 20-20-12 62H57Z" fill="' + gold + '"/>' +
+        '<path d="M62 136h76" />' +
+        '<circle cx="100" cy="26" r="5" fill="' + lime + '" stroke="none"/>' +
+        '<path d="M76 110l8 8 16-20" />' +
+        '</g></svg>';
+    }
+    if (id === 'balance') {
+      return '<svg ' + base + '><g ' + stroke + '>' +
+        '<path d="M100 34v88M78 132h44" />' +
+        '<path d="M55 48h90" />' +
+        '<path d="M55 48 40 92h30Z" fill="' + mint + '"/>' +
+        '<path d="M145 48 130 92h30Z" fill="' + gold + '"/>' +
+        '<circle cx="100" cy="30" r="8" fill="' + coral + '"/>' +
+        '</g></svg>';
+    }
+    if (id === 'molar') {
+      return '<svg ' + base + '><g ' + stroke + '>' +
+        '<circle cx="100" cy="78" r="35" fill="' + gold + '"/>' +
+        '<circle cx="62" cy="112" r="18" fill="' + mint + '"/>' +
+        '<circle cx="138" cy="112" r="18" fill="' + mint + '"/>' +
+        '<path d="M78 98l-6 4M122 98l6 4" />' +
+        '<text x="100" y="90" text-anchor="middle" font-family="Tahoma, sans-serif" font-size="30" font-weight="700" fill="' + ink + '" stroke="none">18</text>' +
+        '<text x="62" y="118" text-anchor="middle" font-family="Tahoma, sans-serif" font-size="15" font-weight="700" fill="' + ink + '" stroke="none">H</text>' +
+        '<text x="138" y="118" text-anchor="middle" font-family="Tahoma, sans-serif" font-size="15" font-weight="700" fill="' + ink + '" stroke="none">H</text>' +
+        '</g></svg>';
+    }
+    if (id === 'proportion') {
+      return '<svg ' + base + '><g ' + stroke + '>' +
+        '<rect x="30" y="42" width="76" height="32" rx="9" fill="' + mint + '"/>' +
+        '<rect x="30" y="86" width="76" height="32" rx="9" fill="' + gold + '"/>' +
+        '<path d="M22 80h92" />' +
+        '<text x="68" y="66" text-anchor="middle" font-family="Tahoma, sans-serif" font-size="20" font-weight="700" fill="' + ink + '" stroke="none">8</text>' +
+        '<text x="68" y="110" text-anchor="middle" font-family="Tahoma, sans-serif" font-size="20" font-weight="700" fill="' + ink + '" stroke="none">4</text>' +
+        '<text x="126" y="96" text-anchor="middle" font-family="Tahoma, sans-serif" font-size="40" font-weight="700" fill="' + green + '" stroke="none">=</text>' +
+        '<circle cx="170" cy="80" r="21" fill="' + cream + '" stroke-dasharray="5 5"/>' +
+        '<text x="170" y="90" text-anchor="middle" font-family="Tahoma, sans-serif" font-size="24" font-weight="700" fill="' + coral + '" stroke="none">?</text>' +
+        '</g></svg>';
+    }
+    if (id === 'truefalse') {
+      return '<svg ' + base + '><g ' + stroke + '>' +
+        '<g transform="rotate(-8 65 80)"><rect x="28" y="45" width="72" height="70" rx="12" fill="' + mint + '"/>' +
+        '<path d="M48 80l13 13 24-29" /></g>' +
+        '<g transform="rotate(8 135 80)"><rect x="102" y="45" width="72" height="70" rx="12" fill="#ffd9c9"/>' +
+        '<path d="M119 62l38 38M157 62l-38 38" /></g>' +
+        '</g></svg>';
+    }
+    if (id === 'memory') {
+      return '<svg ' + base + '><g ' + stroke + '>' +
+        '<rect x="30" y="28" width="60" height="54" rx="9" fill="' + green + '"/>' +
+        '<rect x="109" y="28" width="60" height="54" rx="9" fill="' + cream + '"/>' +
+        '<rect x="30" y="93" width="60" height="54" rx="9" fill="' + cream + '"/>' +
+        '<rect x="109" y="93" width="60" height="54" rx="9" fill="' + green + '"/>' +
+        '<text x="60" y="63" text-anchor="middle" font-family="Tahoma, sans-serif" font-size="24" font-weight="700" fill="' + lime + '" stroke="none">?</text>' +
+        '<text x="139" y="63" text-anchor="middle" font-family="Tahoma, sans-serif" font-size="16" font-weight="700" fill="' + ink + '" stroke="none">O2</text>' +
+        '<text x="60" y="128" text-anchor="middle" font-family="Tahoma, sans-serif" font-size="16" font-weight="700" fill="' + ink + '" stroke="none">H2</text>' +
+        '<text x="139" y="128" text-anchor="middle" font-family="Tahoma, sans-serif" font-size="24" font-weight="700" fill="' + lime + '" stroke="none">?</text>' +
+        '</g></svg>';
+    }
+    return '<svg ' + base + '><g ' + stroke + '>' +
+      '<rect x="30" y="28" width="140" height="28" rx="14" fill="' + mint + '"/>' +
+      '<rect x="46" y="66" width="124" height="28" rx="14" fill="' + gold + '"/>' +
+      '<rect x="62" y="104" width="108" height="28" rx="14" fill="#ffd9c9"/>' +
+      '<circle cx="45" cy="42" r="10" fill="' + cream + '"/><text x="45" y="47" text-anchor="middle" font-family="Tahoma, sans-serif" font-size="12" font-weight="700" fill="' + ink + '" stroke="none">1</text>' +
+      '<circle cx="61" cy="80" r="10" fill="' + cream + '"/><text x="61" y="85" text-anchor="middle" font-family="Tahoma, sans-serif" font-size="12" font-weight="700" fill="' + ink + '" stroke="none">2</text>' +
+      '<circle cx="77" cy="118" r="10" fill="' + cream + '"/><text x="77" y="123" text-anchor="middle" font-family="Tahoma, sans-serif" font-size="12" font-weight="700" fill="' + ink + '" stroke="none">3</text>' +
+      '</g></svg>';
+  }
+
   function renderGames() {
     var grid = $('#gamesGrid');
     if (!grid) return;
@@ -2155,7 +2440,7 @@
         '</div>' +
         '<h3>' + esc(g.title) + '</h3>' +
         '<p>' + esc(g.desc) + '</p>' +
-        '<span class="game-art" aria-hidden="true">' + moleculeSVG(featured ? 'H2O' : (g.id === 'molar' ? 'CO2' : 'O2'), featured ? 210 : 140) + '</span>' +
+        '<span class="game-art" aria-hidden="true">' + gameArtSVG(g.id) + '</span>' +
         '<div class="game-card-foot">' +
         '<span class="game-best">' + (best ? 'أفضل نتيجة: ' + best : 'لم تلعب بعد') + '</span>' +
         '<span class="game-play">' + icon('play') + ' العب</span>' +
@@ -2254,6 +2539,7 @@
         '<p class="muted" style="font-size:11px;text-align:center">' + esc(r.title) + '</p>',
       options: set.options,
       correct: set.correct,
+      atomic: atomicMassesText(reactionFormulas(r)),
       explain: 'المعامل الصحيح هو ' + correct + '. تأكد من تساوي ذرات كل عنصر في الطرفين.'
     };
   }
@@ -2265,14 +2551,15 @@
       if (Math.abs(m.mass - item.mass) > 0.01) pool.push(m.mass);
     });
     pool.push(item.mass + 16, item.mass + 12, item.mass - 12, item.mass * 2);
-    var set = optionSet(item.mass, pool, 4, function (v) { return massNum(v) + ' غ/مول'; });
+    var set = optionSet(item.mass, pool, 4, function (v) { return massNum(v) + ' g/mol'; });
     return {
       promptHTML: '<p class="quiz-stage-q">ما الكتلة المولية لهذه المادة؟</p>' +
         '<div class="quiz-stage-eq"><span style="font-size:32px;font-weight:700">' + item.html + '</span>' +
         '<div style="font-size:12px;color:var(--muted);margin-top:6px">' + esc(item.name) + '</div></div>',
       options: set.options,
       correct: set.correct,
-      explain: 'الكتلة المولية لـ ' + item.formula + ' هي ' + massNum(item.mass) + ' غ/مول.'
+      atomic: atomicMassesText([item.formula]),
+      explain: 'الكتلة المولية لـ ' + item.formula + ' هي ' + massNum(item.mass) + ' g/mol.'
     };
   }
 
@@ -2281,7 +2568,7 @@
     var given = pick(r.species);
     var others = r.species.filter(function (s) { return s.formula !== given.formula; });
     var target = pick(others);
-    var mass = round(r.defaultMass * pick([0.5, 1, 1.5, 2, 2.5]), 1);
+    var mass = experimentMass(given.lineMass);
     var answer = round(mass * target.lineMass / given.lineMass, 1);
     var pool = [
       round(mass * given.lineMass / target.lineMass, 1),
@@ -2290,14 +2577,17 @@
       r.totalMass,
       answer + mass
     ].filter(function (v) { return v > 0 && Math.abs(v - answer) > 0.05; });
-    var set = optionSet(answer, pool, 4, function (v) { return massNum(v) + ' غ'; });
+    var set = optionSet(answer, pool, 4, function (v) { return massNum(v) + ' g'; });
     return {
-      promptHTML: '<p class="quiz-stage-q">إذا تفاعل <b>' + massNum(mass) + ' غ</b> من ' + esc(speciesName(given)) +
+      promptHTML: '<p class="quiz-stage-q">إذا تفاعل <b>' + massNum(mass) + ' g</b> من ' + esc(speciesName(given)) +
         '، فما كتلة <b>' + esc(speciesName(target)) + '</b>؟</p>' +
-        '<div class="quiz-stage-eq">' + eqSequenceHTML(r, { masses: true, given: given.formula, target: target.formula }) + '</div>',
+        '<div class="quiz-stage-eq">' + rxnTableHTML(r, {
+          given: given.formula, target: target.formula, givenMass: mass,
+          general: true, problem: true, atomic: true
+        }) + '</div>',
       options: set.options,
       correct: set.correct,
-      explain: 'الجواب = ' + massNum(mass) + ' × ' + massNum(target.lineMass) + ' ÷ ' + massNum(given.lineMass) + ' = ' + massNum(answer) + ' غ.'
+      explain: 'الجواب = ' + massNum(mass) + ' × ' + massNum(target.lineMass) + ' ÷ ' + massNum(given.lineMass) + ' = ' + massNum(answer) + ' g.'
     };
   }
 
@@ -2308,6 +2598,7 @@
         '<div style="text-align:center;font-size:38px;margin:6px 0 0">' + icon(q.answer ? 'check' : 'x') + '</div>',
       options: ['صح', 'خطأ'],
       correct: q.answer ? 0 : 1,
+      atomic: 'H=1 · C=12 · N=14 · O=16 · Na=23 · Cl=35.5',
       explain: q.why
     };
   }
@@ -2379,6 +2670,7 @@
       clamp((s.timeLeft / s.duration) * 100, 0, 100) + '%"></span></div>' +
       '<div class="quiz-progress"><span>سؤال <b>' + s.asked + '</b> من ' + s.max + '</span>' +
       '<span>سلسلة: <b>' + s.combo + '×</b></span></div>' +
+      (s.q.atomic ? '<div class="atomic-note">' + icon('atom') + '<span>الكتل الذرية:</span><b dir="ltr">' + s.q.atomic + '</b></div>' : '') +
       s.q.promptHTML +
       '<div class="quiz-options game-options">' +
       s.q.options.map(function (o, i) {
@@ -2822,6 +3114,204 @@
       '</div>';
   }
 
+  /* مشهد الذرات: نبدأ من جزيئات المتفاعلات، ثم تتفكك الروابط
+     وتنتقل الذرات نفسها لتشكّل جزيئات النواتج. لا سهم ولا طرفان. */
+  function rxFormulaSVG(formula) {
+    return tokenizeFormula(formula).map(function (t) {
+      if (/^\d+$/.test(t)) return '<tspan baseline-shift="sub" font-size="70%">' + t + '</tspan>';
+      return '<tspan>' + t + '</tspan>';
+    }).join('');
+  }
+
+  function rxLayoutMolecule(sp, cx, cy, scale) {
+    var atoms = [];
+    Object.keys(sp.counts).forEach(function (el) {
+      for (var i = 0; i < sp.counts[el]; i++) atoms.push(el);
+    });
+    atoms.sort(function (a, b) {
+      return (Chem.ATOMIC[b] ? Chem.ATOMIC[b].mass : 0) - (Chem.ATOMIC[a] ? Chem.ATOMIC[a].mass : 0);
+    });
+    var n = atoms.length;
+    var molR = (n <= 2 ? 20 : Math.min(54, 24 + n * 3.5)) * scale;
+    var pos = [];
+    if (n === 1) {
+      pos = [[0, 0]];
+    } else if (n === 2) {
+      pos = [[-molR, 0], [molR, 0]];
+    } else {
+      pos.push([0, 0]);
+      for (var j = 1; j < n; j++) {
+        var ang = -Math.PI / 2 + (j - 1) * 2 * Math.PI / (n - 1);
+        pos.push([Math.cos(ang) * molR, Math.sin(ang) * molR]);
+      }
+    }
+    return atoms.map(function (el, i) {
+      return {
+        el: el,
+        x: cx + pos[i][0],
+        y: cy + pos[i][1],
+        r: atomRadius(el, 120 * scale)
+      };
+    });
+  }
+
+  function rxMoleculeList(species) {
+    var list = [];
+    species.forEach(function (sp) {
+      for (var i = 0; i < sp.coef; i++) list.push(sp);
+    });
+    return list;
+  }
+
+  function rxRingCenters(count, radius, offset, W, H) {
+    var out = [];
+    if (count === 1) {
+      out.push({ x: W / 2, y: H / 2 });
+      return out;
+    }
+    for (var i = 0; i < count; i++) {
+      var a = -Math.PI / 2 + offset + i * 2 * Math.PI / count;
+      out.push({
+        x: W / 2 + Math.cos(a) * radius,
+        y: H / 2 + Math.sin(a) * radius
+      });
+    }
+    return out;
+  }
+
+  function artSceneSVG(reaction) {
+    var W = 760;
+    var H = 430;
+    var reactants = rxMoleculeList(reaction.reactants);
+    var products = rxMoleculeList(reaction.products);
+    var nr = reactants.length;
+    var np = products.length;
+    var startR = nr > 1 ? Math.min(155, 85 + nr * 10) : 0;
+    var endR = np > 1 ? Math.min(145, 60 + np * 12) : 0;
+    var scaleStart = nr > 4 ? 0.8 : 0.96;
+    var scaleEnd = np > 4 ? 0.8 : 0.96;
+    var startCenters = rxRingCenters(nr, startR, 0, W, H);
+    var endCenters = rxRingCenters(np, endR, Math.PI / Math.max(np, 1), W, H);
+
+    var startAtoms = [];
+    var endAtoms = [];
+    var startBonds = [];
+    var endBonds = [];
+    var startLabels = [];
+    var endLabels = [];
+
+    reactants.forEach(function (sp, i) {
+      var c = startCenters[i];
+      var atoms = rxLayoutMolecule(sp, c.x, c.y, scaleStart);
+      atoms.forEach(function (a) { startAtoms.push(a); });
+      for (var j = 1; j < atoms.length; j++) startBonds.push([atoms[0], atoms[j]]);
+      startLabels.push({
+        x: c.x,
+        y: clamp(c.y + 58, 20, H - 8),
+        text: sp.formula
+      });
+    });
+
+    products.forEach(function (sp, i) {
+      var c = endCenters[i];
+      var atoms = rxLayoutMolecule(sp, c.x, c.y, scaleEnd);
+      atoms.forEach(function (a) { endAtoms.push(a); });
+      for (var j = 1; j < atoms.length; j++) endBonds.push([atoms[0], atoms[j]]);
+      endLabels.push({
+        x: c.x,
+        y: clamp(c.y + 58, 20, H - 8),
+        text: sp.formula
+      });
+    });
+
+    var endByEl = {};
+    endAtoms.forEach(function (a) {
+      endByEl[a.el] = endByEl[a.el] || [];
+      endByEl[a.el].push(a);
+    });
+    var used = {};
+    var atomMarkup = startAtoms.map(function (a) {
+      used[a.el] = used[a.el] || 0;
+      var pool = endByEl[a.el] || [];
+      var dest = pool[used[a.el]] || pool[pool.length - 1] || a;
+      used[a.el]++;
+      var info = Chem.ATOMIC[a.el] || { color: '#cfd8dc' };
+      var labelColor = DARK_ELEMENTS.indexOf(a.el) !== -1 ? '#fff9ec' : '#10241e';
+      return '<g class="rx-atom" data-x2="' + dest.x + '" data-y2="' + dest.y +
+        '" style="transform:translate(' + a.x + 'px,' + a.y + 'px)">' +
+        '<circle r="' + a.r + '" fill="' + info.color + '" stroke="#10241e" stroke-width="1.6"/>' +
+        '<text y="' + (a.r * 0.34) + '" text-anchor="middle" font-family="Tahoma, sans-serif" font-size="' +
+        (a.r * 0.92) + '" font-weight="700" fill="' + labelColor + '">' + a.el + '</text>' +
+        '</g>';
+    }).join('');
+
+    function bondsSVG(list, cls) {
+      return list.map(function (pair) {
+        return '<line class="rx-bond ' + cls + '" x1="' + pair[0].x + '" y1="' + pair[0].y +
+          '" x2="' + pair[1].x + '" y2="' + pair[1].y + '"/>';
+      }).join('');
+    }
+
+    var startLabelMarkup = startLabels.map(function (l) {
+      return '<text class="rx-label rx-label-reactant" x="' + l.x + '" y="' + l.y +
+        '" text-anchor="middle">' + rxFormulaSVG(l.text) + '</text>';
+    }).join('');
+    var endLabelMarkup = endLabels.map(function (l) {
+      return '<text class="rx-label rx-label-product" x="' + l.x + '" y="' + l.y +
+        '" text-anchor="middle">' + rxFormulaSVG(l.text) + '</text>';
+    }).join('');
+
+    return '<svg class="rx-scene" viewBox="0 0 ' + W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg" aria-label="تمثيل تفكك الروابط وتشكلها">' +
+      '<g class="rx-bonds rx-bonds-start">' + bondsSVG(startBonds, 'rx-bond-start') + '</g>' +
+      '<g class="rx-bonds rx-bonds-end">' + bondsSVG(endBonds, 'rx-bond-end') + '</g>' +
+      '<g class="rx-atoms">' + atomMarkup + '</g>' +
+      '<g class="rx-labels">' + startLabelMarkup + endLabelMarkup + '</g>' +
+      '</svg>' +
+      '<div class="art-phase" id="artPhase"></div>';
+  }
+
+  function playArt() {
+    var stage = $('#artStage');
+    if (!stage) return;
+    if (stage.classList.contains('is-transforming')) {
+      renderArt();
+      stage = $('#artStage');
+    }
+    if (!stage || !stage.querySelector('.rx-scene')) return;
+    var phase = $('#artPhase');
+    if (phase) phase.textContent = 'الروابط تتفكك… انظر إلى الذرات نفسها';
+    stage.classList.add('is-transforming');
+    SFX.pop();
+    var atoms = stage.querySelectorAll('.rx-atom');
+    setTimeout(function () {
+      atoms.forEach(function (a) {
+        a.style.transform = 'translate(' + a.getAttribute('data-x2') + 'px,' + a.getAttribute('data-y2') + 'px)';
+      });
+      if (phase) phase.textContent = 'الذرات تعيد ترتيب نفسها…';
+      SFX.click();
+    }, 360);
+    setTimeout(function () {
+      if (phase) phase.textContent = 'روابط جديدة تتشكل…';
+      SFX.ok();
+    }, 1700);
+    setTimeout(function () {
+      if (phase) phase.textContent = 'النواتج: ' + reactionProductText(artReaction());
+    }, 2600);
+    if (!state.art.played) {
+      state.art.played = true;
+      persist();
+      awardXP(10, 'شغّلت التفاعل');
+      unlockBadge('artist');
+    }
+    burst(60);
+  }
+
+  function reactionProductText(r) {
+    return r.products.map(function (sp) {
+      return (sp.coef > 1 ? sp.coef : '') + sp.formula;
+    }).join(' + ');
+  }
+
   function renderArt() {
     var host = $('#artStage');
     if (!host) return;
@@ -2835,25 +3325,20 @@
     var title = $('#artReactionTitle');
     if (title) title.textContent = r.title;
 
-    host.innerHTML =
-      '<div class="art-stage-inner">' +
-      '<div class="art-side-group reactants">' +
-      '<span class="art-side-label">المتفاعلات</span>' +
-      '<div class="art-molecules">' + r.reactants.map(artSpeciesHTML).join('') + '</div>' +
-      '</div>' +
-      '<div class="art-arrow">→<small>تفاعل</small></div>' +
-      '<div class="art-side-group products">' +
-      '<span class="art-side-label">النواتج</span>' +
-      '<div class="art-molecules">' + r.products.map(artSpeciesHTML).join('') + '</div>' +
-      '</div>' +
-      '</div>';
+    host.innerHTML = artSceneSVG(r);
+    var phaseEl = $('#artPhase');
+    if (phaseEl) {
+      phaseEl.textContent = 'قبل التفاعل: ' + r.reactants.map(function (sp) {
+        return (sp.coef > 1 ? sp.coef : '') + sp.formula;
+      }).join(' + ') + ' — اضغط «شغّل التفاعل»';
+    }
 
     var elements = unique(reactionElements(r));
     var legend = $('#artLegend');
     if (legend) {
       legend.innerHTML = elements.map(function (el) {
         var info = Chem.ATOMIC[el] || { color: '#ccc', ar: el };
-        return '<span><i class="legend-dot" style="background:' + info.color + '"></i>' + el + ' · ' + esc(info.ar) + '</span>';
+        return '<span><i class="legend-dot" style="background:' + info.color + '"></i>' + el + ' · ' + esc(info.ar) + ' (' + info.mass + ')</span>';
       }).join('') + '<span><i class="legend-dot" style="background:var(--lime)"></i>تمثيل مبسّط للجزيئات</span>';
     }
 
@@ -2886,7 +3371,7 @@
           '<span class="chart-label">' + Chem.formatFormula(sp.formula) + '</span>' +
           '<span class="chart-track"><span class="chart-fill' + (sp.side === 'right' ? ' is-product' : '') + '" style="width:' +
           clamp((sp.lineMass / max) * 100, 3, 100) + '%"></span></span>' +
-          '<span class="chart-value">' + massNum(sp.lineMass) + ' غ</span>' +
+          '<span class="chart-value">' + massNum(sp.lineMass) + ' g</span>' +
           '</div>';
       }).join('');
     }
@@ -2906,27 +3391,6 @@
       });
     });
     return out;
-  }
-
-  function playArt() {
-    var stage = $('#artStage');
-    if (!stage) return;
-    stage.classList.remove('is-playing');
-    void stage.offsetWidth;
-    stage.classList.add('is-playing');
-    SFX.pop();
-    setTimeout(function () { SFX.ok(); }, 750);
-    if (artTimeout) clearTimeout(artTimeout);
-    artTimeout = setTimeout(function () {
-      if (stage) stage.classList.remove('is-playing');
-    }, 3600);
-    if (!state.art.played) {
-      state.art.played = true;
-      persist();
-      awardXP(10, 'شغّلت التفاعل');
-      unlockBadge('artist');
-      burst(70);
-    }
   }
 
   function eqStringHTML(r) {
@@ -3179,7 +3643,7 @@
       ctx.textAlign = 'center';
       ctx.fillStyle = '#fff9ec';
       ctx.font = '600 26px ' + font;
-      ctx.fillText('وازن المعادلة · اكتب السطر الثاني · اضرب بالتقاطع', W / 2, H - 140);
+      ctx.fillText('وازن المعادلة · اكتب السطر العام · اكتب سطر المسألة', W / 2, H - 140);
       ctx.fillStyle = '#d8f27e';
       ctx.font = '800 30px ' + display;
       ctx.fillText('مسألة السطرين', W / 2, H - 85);
@@ -3284,7 +3748,8 @@
       return '<div class="saved-item">' +
         '<div class="saved-main">' +
         '<div class="saved-eq" dir="ltr">' + eq + '</div>' +
-        '<div class="saved-meta">' + massNum(s.mass) + ' غ من ' + esc(s.givenName) + ' → <b>' + massNum(s.answer) + ' غ</b> من ' + esc(s.targetName) + ' · ' + formatDate(s.date) + '</div>' +
+        '<div class="saved-meta">' + massNum(s.mass) + ' g من ' + esc(s.givenName) + ' → <b>' + massNum(s.answer) + ' g</b> من ' + esc(s.targetName) + ' · ' + formatDate(s.date) + '</div>' +
+        (reaction ? '<div class="saved-atomic">الكتل الذرية: <span dir="ltr">' + atomicMassesText(reactionFormulas(reaction)) + '</span></div>' : '') +
         '</div>' +
         '<div class="saved-tools">' +
         '<button class="iconbtn" type="button" data-saved-open="' + s.id + '" aria-label="افتح المسألة في المختبر">' + icon('arrow') + '</button>' +
@@ -3353,7 +3818,7 @@
 
       ctx.fillStyle = '#10241e';
       ctx.font = '400 31px ' + font;
-      var lines = wrapCanvasText(ctx, 'قد أتمّ رحلة تعلّم مسألة السطرين في الكيمياء: موازنة المعادلات، حساب الكتل المولية، بناء السطر الثاني، وحل التناسبات بدقة.', W - 400);
+      var lines = wrapCanvasText(ctx, 'قد أتمّ رحلة تعلّم مسألة السطرين في الكيمياء: موازنة المعادلات، حساب الكتل المولية، بناء السطرين، وحل التناسبات بدقة.', W - 400);
       lines.forEach(function (line, i) {
         ctx.fillText(line, W / 2, 555 + i * 48);
       });
@@ -3430,19 +3895,22 @@
       var answer = round(mass * target.lineMass / given.lineMass, 2);
       questions += '<div class="ws-question">' +
         '<h3>المسألة ' + (idx + 1) + ' — ' + esc(r.title) + '</h3>' +
-        '<div class="ws-eq">' + eqStringHTML(r) + '</div>' +
-        '<p>إذا تفاعل <b>' + massNum(mass) + ' غ</b> من ' + esc(speciesName(given)) + '، فما كتلة <b>' +
-        esc(speciesName(target)) + '</b> الناتجة؟ (اكتب الحل بالسطرين)</p>' +
-        '<div class="ws-answer">الجواب: ................................ غ</div>' +
+        '<div class="ws-eq">' + rxnTableHTML(r, {
+          given: given.formula, target: target.formula, givenMass: mass,
+          general: true, problem: true, blankGeneral: true, atomic: true
+        }) + '</div>' +
+        '<p>إذا تفاعل <b>' + massNum(mass) + ' g</b> من ' + esc(speciesName(given)) + '، فما كتلة <b>' +
+        esc(speciesName(target)) + '</b> الناتجة؟ أكمل السطر العام والسطر الثاني، ثم اكتب التناسب.</p>' +
+        '<div class="ws-answer">الجواب: ................................ g</div>' +
         '</div>';
-      answers += '<li>المسألة ' + (idx + 1) + ': ' + massNum(answer) + ' غ — (' + massNum(mass) + ' × ' +
+      answers += '<li>المسألة ' + (idx + 1) + ': ' + massNum(answer) + ' g — (' + massNum(mass) + ' × ' +
         massNum(target.lineMass) + ' ÷ ' + massNum(given.lineMass) + ')</li>';
     });
 
     var ws = $('#worksheet');
     if (!ws) return;
     ws.innerHTML = '<div class="ws-head"><h1>ورقة عمل — مسألة السطرين</h1>' +
-      '<p>الكيمياء · الصف التاسع · وازن المعادلة، اكتب السطر الثاني، ثم حل التناسب.</p></div>' +
+      '<p>الكيمياء · الصف التاسع · وازن المعادلة، اكتب السطرين، ثم حل التناسب.</p></div>' +
       '<div class="ws-name"><span>الاسم: ..........................</span><span>الصف: ................</span><span>التاريخ: ................</span></div>' +
       questions +
       '<div class="ws-key"><h2>مفتاح الإجابات (للمعلّم)</h2><ol>' + answers + '</ol></div>';
